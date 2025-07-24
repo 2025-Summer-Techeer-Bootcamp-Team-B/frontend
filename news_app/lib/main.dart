@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'screens/history/history_list_screen.dart';
 import 'screens/favorites/favorites_screen_toggle_off.dart';
+// import 'screens/home/dfs.dart';
+// import 'screens/favorites/favorites_screen_toggle_off.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,8 +12,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: FavoritesScreenToggleOff(),
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: '즐겨찾기 데모',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        fontFamily: 'Pretendard',
+      ),
+      home: const FavoritesCategoryScreen(),
     );
   }
 }
