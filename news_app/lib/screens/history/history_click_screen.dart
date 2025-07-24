@@ -1,0 +1,267 @@
+import 'package:flutter/material.dart';
+
+class NewsItem {
+  final int id;
+  final String date;
+  final String title;
+  final String source;
+
+  NewsItem({
+    required this.id,
+    required this.date,
+    required this.title,
+    required this.source,
+  });
+}
+
+class HistoryClickScreen extends StatefulWidget {
+  const HistoryClickScreen({Key? key}) : super(key: key);
+
+  @override
+  State<HistoryClickScreen> createState() => _HistoryClickScreenState();
+}
+
+class _HistoryClickScreenState extends State<HistoryClickScreen> {
+  // 카테고리명과 아이콘 asset 매핑
+  final Map<String, String> categoryIconMap = {
+    '정치': 'assets/a_image/politics_icon.webp',
+    '경제': 'assets/a_image/economy.png',
+    '사회': 'assets/a_image/society_icon.webp',
+    '문화': 'assets/a_image/culture_icon.webp',
+    'IT·과학': 'assets/a_image/IT_icon.webp',
+    '국제': 'assets/a_image/global_icon.png',
+    '재난·기후·환경': 'assets/a_image/environment_icon.webp',
+    '생활·건강': 'assets/a_image/health_icon.webp',
+    '스포츠': 'assets/a_image/sport_icon.png',
+    '연예': 'assets/a_image/entertainment.webp',
+    '날씨': 'assets/a_image/weather_icon.png',
+    '이슈': 'assets/a_image/issue_icon.webp',
+  };
+  // 예시: 현재 카테고리명. 실제로는 유동적으로 받아야 함
+  final String currentCategory = '정치';
+
+  final List<NewsItem> newsItems = [
+    NewsItem(
+        id: 1, date: "25/07/09", title: "여아, 갑질 개별 공화회서 적들", source: "기사 출처"),
+    NewsItem(
+        id: 2, date: "25/07/09", title: "여아, 갑질 개별 공화회서 적들", source: "기사 출처"),
+    NewsItem(
+        id: 3, date: "25/07/09", title: "여아, 갑질 개별 공화회서 적들", source: "기사 출처"),
+    NewsItem(
+        id: 4, date: "25/07/09", title: "여아, 갑질 개별 공화회서 적들", source: "기사 출처"),
+    NewsItem(id: 5, date: "25/07/09", title: "", source: ""),
+    NewsItem(id: 6, date: "25/07/09", title: "", source: ""),
+  ];
+
+  Set<int> clickedItems = {};
+
+  void handleNewsClick(int itemId) {
+    setState(() {
+      if (clickedItems.contains(itemId)) {
+        clickedItems.remove(itemId);
+      } else {
+        clickedItems.add(itemId);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // iPhone 15 화면 크기: 393 x 852
+    return Scaffold(
+      backgroundColor: const Color(0xFFF9FAFB),
+      body: Center(
+        child: Container(
+          width: 393,
+          height: 852,
+          color: const Color(0xFFF9FAFB),
+          child: Column(
+            children: [
+              // 헤더
+              Container(
+                color: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () {},
+                      icon: const Icon(Icons.chevron_left,
+                          color: Color(0xFF0565FF), size: 24),
+                      label: const Text('뒤로',
+                          style: TextStyle(
+                            color: Color(0xFF0565FF),
+                            fontFamily: 'Pretendard',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          )),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF0565FF),
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(50, 30),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                    const Text(
+                      '재생기록',
+                      style: TextStyle(
+                        color: Color(0xFF111827),
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {},
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF0565FF),
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(50, 30),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text('완료',
+                          style: TextStyle(
+                            color: Color(0xFF0565FF),
+                            fontFamily: 'Pretendard',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          )),
+                    ),
+                  ],
+                ),
+              ),
+              // 내용
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      // 카테고리 헤더
+                      Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: const BoxDecoration(
+                              color: Colors.transparent,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Image.asset(
+                              categoryIconMap[currentCategory]!,
+                              width: 32,
+                              height: 32,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          const SizedBox(width: 18),
+                          ElevatedButton(
+                            onPressed: () {},
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF0565FF),
+                              foregroundColor: Colors.white,
+                              shape: const StadiumBorder(),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 36, vertical: 12),
+                              textStyle: const TextStyle(
+                                fontSize: 20,
+                                fontFamily: 'Pretendard',
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            child: Text(currentCategory),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      // 뉴스 그리드
+                      Expanded(
+                        child: GridView.builder(
+                          itemCount: 8,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: 16,
+                            childAspectRatio: 1.2,
+                          ),
+                          itemBuilder: (context, index) {
+                            final item = newsItems[index % newsItems.length];
+                            final isClicked = clickedItems.contains(item.id);
+                            return GestureDetector(
+                              onTap: () => handleNewsClick(item.id),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.04),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                padding: const EdgeInsets.all(10),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    // 날짜 뱃지
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: isClicked
+                                            ? Colors.blue
+                                            : const Color(0xFFE5E7EB),
+                                        borderRadius:
+                                            BorderRadius.circular(999),
+                                      ),
+                                      child: Text(
+                                        item.date,
+                                        style: TextStyle(
+                                          color: isClicked
+                                              ? Colors.white
+                                              : const Color(0xFF374151),
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    // 뉴스 이미지 자리
+                                    Container(
+                                      height: 60,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF3F4F6),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Center(
+                                        child: Text(
+                                          '뉴스 사진',
+                                          style: TextStyle(
+                                            color: Color(0xFF9CA3AF),
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
