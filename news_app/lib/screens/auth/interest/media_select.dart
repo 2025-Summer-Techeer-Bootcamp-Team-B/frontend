@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'category_select.dart';
 
 class MediaSelectPage extends StatefulWidget {
   const MediaSelectPage({super.key});
@@ -181,7 +182,12 @@ class _MediaSelectPageState extends State<MediaSelectPage> {
                         elevation: 0,
                       ),
                       onPressed: () {
-                        // TODO: 선택 완료 처리
+                        // 카테고리 선택 페이지로 이동
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const CategorySelectPage(),
+                          ),
+                        );
                       },
                       child: CustomPaint(
                         size: Size(40, 32),
