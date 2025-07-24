@@ -1,356 +1,253 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dotted_border/dotted_border.dart';
 
-class FavoritesScreenToggleOff extends StatelessWidget {
-  const FavoritesScreenToggleOff({Key? key}) : super(key: key);
+class FavoritesCategoryScreen extends StatelessWidget {
+  const FavoritesCategoryScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 393,
-        height: 852,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFE3F0FF), Color(0xFFD6FFD6)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    // 더미 카테고리 데이터
+    final List<Map<String, String>> categories = [
+      {
+        'icon': 'assets/a_image/issue_icon.webp',
+        'name': '이슈',
+        'image': 'assets/a_image/home_news1.jpg',
+        'date': '25/07/01',
+        'title': '뉴스 제목 1',
+      },
+      {
+        'icon': 'assets/a_image/issue_icon.webp',
+        'name': '이슈',
+        'image': 'assets/a_image/home_news1.jpg',
+        'date': '25/07/02',
+        'title': '뉴스 제목 2',
+      },
+      {
+        'icon': 'assets/a_image/issue_icon.webp',
+        'name': '이슈',
+        'image': 'assets/a_image/home_news1.jpg',
+        'date': '25/07/03',
+        'title': '뉴스 제목 3',
+      },
+      {
+        'icon': 'assets/a_image/issue_icon.webp',
+        'name': '이슈',
+        'image': 'assets/a_image/home_news1.jpg',
+        'date': '25/07/04',
+        'title': '뉴스 제목 4',
+      },
+      {
+        'icon': 'assets/a_image/issue_icon.webp',
+        'name': '이슈',
+        'image': 'assets/a_image/home_news1.jpg',
+        'date': '25/07/05',
+        'title': '뉴스 제목 5',
+      },
+    ];
+
+    // 카드 위치/회전값 패턴 (반복 적용)
+    // 모든 카드 동일한 위치/회전값 적용
+    const double cardDx = 0; // x축 이동 없음
+    const double cardAngle = 0; // 회전 없음(혹은 미세하게 -0.01 등으로 조정 가능)
+
+    // 카드 하나의 높이와 카드 간 겹침량(겹침이 많을수록 값이 큼)
+    const double cardHeight = 260;
+    const double overlapAmount = 60; // 카드가 겹치는 부분의 높이
+    const double cardStep = cardHeight - overlapAmount; // 카드가 아래로 이동하는 거리
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFE8F0FF),
+      body: SafeArea(
+        child: Center(
+          child: Container(
+            width: 393,
+            height: 852,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFE8F0FF), Color(0xFFF8FFF8)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Stack(
+              children: [
+                // 상단 바
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 16),
+                    color: Colors.transparent,
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Icon(Icons.arrow_back_ios_new,
+                            color: Color(0xFF0565FF), size: 32),
+                        Text(
+                          '즐겨찾기',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        Text('완료',
+                            style: TextStyle(
+                              color: Color(0xFF0565FF),
+                              fontSize: 16,
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.bold,
+                            )),
+                      ],
+                    ),
+                  ),
+                ),
+                // 카드들 (포개지면서 아래로 쭉 펼쳐짐, 스크롤 정상)
+                Positioned.fill(
+                  top: 80,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: SizedBox(
+                          height: cardStep * (categories.length - 1) +
+                              cardHeight +
+                              40,
+                          child: Stack(
+                            alignment: Alignment.topCenter,
+                            children: [
+                              for (int i = 0; i < categories.length; i++)
+                                Positioned(
+                                  left: (constraints.maxWidth - 220) / 2 +
+                                      cardDx +
+                                      (i % 2 == 0 ? -20 : 40),
+                                  top: cardStep * i,
+                                  child: Transform.rotate(
+                                    angle: cardAngle,
+                                    child: DashedBorderCard(
+                                      categoryIcon: categories[i]['icon']!,
+                                      categoryName: categories[i]['name']!,
+                                      imagePath: categories[i]['image']!,
+                                      date: categories[i]['date']!,
+                                      title: categories[i]['title']!,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class DashedBorderCard extends StatelessWidget {
+  final String categoryIcon;
+  final String categoryName;
+  final String imagePath;
+  final String date;
+  final String title;
+  const DashedBorderCard({
+    required this.categoryIcon,
+    required this.categoryName,
+    required this.imagePath,
+    required this.date,
+    required this.title,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return DottedBorder(
+      options: const RoundedRectDottedBorderOptions(
+        color: Color(0xFFdadada),
+        strokeWidth: 2,
+        dashPattern: [8, 6],
+        radius: Radius.circular(28),
+      ),
+      child: Container(
+        width: 220,
+        height: 260,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.85),
+          borderRadius: BorderRadius.circular(28),
         ),
         child: Stack(
           children: [
-            // 파란색 블롭 (왼쪽 아래, blur 적용)
+            // 카테고리 아이콘 + 이름 (왼쪽 상단)
             Positioned(
-              left: -60,
-              top: 570,
-              width: 260,
-              height: 260,
-              child: SvgPicture.string(
-                '''
-                <svg width="260" height="260" viewBox="0 0 260 260" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <g filter="url(#blur1)">
-                    <ellipse cx="130" cy="130" rx="110" ry="110" fill="url(#paint0_linear_blue)" fill-opacity="0.7"/>
-                  </g>
-                  <defs>
-                    <filter id="blur1" x="-200" y="-200" width="600" height="600" filterUnits="userSpaceOnUse">
-                      <feGaussianBlur stdDeviation="60"/>
-                    </filter>
-                    <linearGradient id="paint0_linear_blue" x1="130" y1="240" x2="130" y2="20" gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#0565FF"/>
-                      <stop offset="1" stop-color="#D1D5F5"/>
-                    </linearGradient>
-                  </defs>
-                </svg>
-                ''',
-                fit: BoxFit.cover,
-              ),
-            ),
-            // 연두색 블롭 (오른쪽 위, blur 적용)
-            Positioned(
-              left: 180,
-              top: 40,
-              width: 260,
-              height: 260,
-              child: SvgPicture.string(
-                '''
-                <svg width="260" height="260" viewBox="0 0 260 260" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <g filter="url(#blur2)">
-                    <ellipse cx="130" cy="130" rx="110" ry="110" fill="url(#paint0_linear_green)" fill-opacity="0.7"/>
-                  </g>
-                  <defs>
-                    <filter id="blur2" x="-200" y="-200" width="600" height="600" filterUnits="userSpaceOnUse">
-                      <feGaussianBlur stdDeviation="60"/>
-                    </filter>
-                    <linearGradient id="paint0_linear_green" x1="130" y1="240" x2="130" y2="20" gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#B6FF6E"/>
-                      <stop offset="1" stop-color="#83CC3A"/>
-                    </linearGradient>
-                  </defs>
-                </svg>
-                ''',
-                fit: BoxFit.cover,
-              ),
-            ),
-            // 첫 번째 카드 (정치, 점선 정확히 맞춤)
-            Positioned(
-              left: 13,
-              top: 193,
-              width: 221,
-              height: 262,
-              child: Transform.rotate(
-                angle: -0.1102,
-                child: DottedBorder(
-                  options: const RoundedRectDottedBorderOptions(
-                    color: Color(0xFFdadada),
-                    strokeWidth: 4,
-                    dashPattern: [10, 8],
-                    radius: Radius.circular(47),
+              left: 14,
+              top: 14,
+              child: Row(
+                children: [
+                  Image.asset(categoryIcon, width: 24, height: 24),
+                  const SizedBox(width: 6),
+                  Text(
+                    categoryName,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
-                  child: Container(
-                    width: 221,
-                    height: 262,
+                ],
+              ),
+            ),
+            // 기사 사진 + 제목 + 날짜
+            Align(
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.asset(
+                      imagePath,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color.fromRGBO(238, 238, 238, 0.3),
-                      borderRadius: BorderRadius.circular(47),
+                      color: const Color(0xFF0565FF),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 32),
-                        // 정치 아이콘
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Image.asset(
-                            'assets/a_image/politics_icon.webp',
-                            width: 32,
-                            height: 32,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.gavel,
-                                    color: Colors.blue, size: 32),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          '정치',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 20,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          '즐겨찾기 한 뉴스가 없습니다.',
-                          style: TextStyle(
-                            fontWeight: FontWeight.normal,
-                            fontSize: 12,
-                            color: Color(0xFF9d9c9c),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                    child: Text(
+                      date,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ),
-            // 두 번째 카드 (경제, 점선 정확히 맞춤)
-            Positioned(
-              left: 115,
-              top: 336,
-              width: 221,
-              height: 262,
-              child: Transform.rotate(
-                angle: 0.162,
-                child: DottedBorder(
-                  options: const RoundedRectDottedBorderOptions(
-                    color: Color(0xFFdadada),
-                    strokeWidth: 4,
-                    dashPattern: [10, 8],
-                    radius: Radius.circular(47),
-                  ),
-                  child: Container(
-                    width: 221,
-                    height: 262,
-                    decoration: BoxDecoration(
-                      color: const Color.fromRGBO(238, 238, 238, 0.8),
-                      borderRadius: BorderRadius.circular(47),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 32),
-                        // 경제 아이콘
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Image.asset(
-                            'assets/a_image/IT_icon.webp',
-                            width: 32,
-                            height: 32,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.computer,
-                                    color: Colors.green, size: 32),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          '경제',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 20,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // 세 번째 카드 (이슈, 점선 적용)
-            Positioned(
-              left: 24.962,
-              top: 530.479,
-              width: 221,
-              height: 262,
-              child: Transform.rotate(
-                angle: -0.209,
-                child: DottedBorder(
-                  options: const RoundedRectDottedBorderOptions(
-                    color: Color(0xFFdadada),
-                    strokeWidth: 4,
-                    dashPattern: [10, 8],
-                    radius: Radius.circular(47),
-                  ),
-                  child: Container(
-                    width: 221,
-                    height: 262,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(47),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // 이슈 아이콘
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Image.asset(
-                            'assets/a_image/issue_icon.webp',
-                            width: 32,
-                            height: 32,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.whatshot,
-                                    color: Colors.blue, size: 32),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          '이슈',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 20,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // 상단 토글 버튼 (디자인용, 동작 없음)
-            Positioned(
-              left: 306,
-              top: 132,
-              width: 61,
-              height: 32.657,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color.fromRGBO(231, 231, 231, 0.74),
-                  borderRadius: BorderRadius.circular(16.3283),
-                ),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.only(left: 2),
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 3,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // 뒤로가기 아이콘 (임시)
-            const Positioned(
-              left: -5,
-              top: 57,
-              width: 41,
-              height: 41,
-              child: Icon(Icons.arrow_back_ios_new,
-                  color: Color(0xFF0565FF), size: 32),
-            ),
-            // 뒤로 텍스트
-            const Positioned(
-              left: 34,
-              top: 65,
-              child: Text(
-                '뒤로',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 20,
-                  color: Color(0xFF0565FF),
-                ),
-              ),
-            ),
-            // 완료 텍스트
-            const Positioned(
-              left: 325,
-              top: 66,
-              width: 66,
-              height: 22,
-              child: Text(
-                '완료',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 22,
-                  color: Color(0xFF0565FF),
-                ),
-              ),
-            ),
-            // 즐겨찾기 제목
-            const Positioned(
-              left: 159,
-              top: 65,
-              child: Text(
-                '즐겨찾기',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 22,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-            // 전체 외곽선
-            Positioned.fill(
-              child: IgnorePointer(
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.black, width: 1),
-                  ),
-                ),
+                ],
               ),
             ),
           ],
