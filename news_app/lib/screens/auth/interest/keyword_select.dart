@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+// import '../../home/home_screen.dart';
 
 class KeywordSelectPage extends StatefulWidget {
   const KeywordSelectPage({super.key});
@@ -32,7 +33,9 @@ class _KeywordSelectPageState extends State<KeywordSelectPage> {
 
   void _addKeyword(String value) {
     final trimmed = value.trim();
-    if (trimmed.isNotEmpty && !keywords.contains(trimmed)) {
+    if (trimmed.isNotEmpty &&
+        !keywords.contains(trimmed) &&
+        keywords.length < 20) {
       setState(() {
         keywords.add(trimmed);
       });
@@ -97,7 +100,7 @@ class _KeywordSelectPageState extends State<KeywordSelectPage> {
 
               // 설명
               Text(
-                '최대 10개까지 입력 가능합니다',
+                '최대 20개까지 입력 가능합니다',
                 style: TextStyle(
                   fontFamily: 'Pretendard',
                   fontWeight: FontWeight.w400,
@@ -144,7 +147,7 @@ class _KeywordSelectPageState extends State<KeywordSelectPage> {
                       vertical: 16,
                     ),
                     border: InputBorder.none,
-                    suffixIcon: keywords.length < 10
+                    suffixIcon: keywords.length < 20
                         ? IconButton(
                             icon: const Icon(
                               Icons.add_circle_outline,
@@ -163,7 +166,7 @@ class _KeywordSelectPageState extends State<KeywordSelectPage> {
               // 키워드 목록
               if (keywords.isNotEmpty) ...[
                 Text(
-                  '선택된 키워드 (${keywords.length}/10)',
+                  '선택된 키워드 (${keywords.length}/20)',
                   style: TextStyle(
                     fontFamily: 'Pretendard',
                     fontWeight: FontWeight.w600,
@@ -236,8 +239,13 @@ class _KeywordSelectPageState extends State<KeywordSelectPage> {
                 child: ElevatedButton(
                   onPressed: keywords.isNotEmpty
                       ? () {
-                          // 완료 처리
-                          Navigator.of(context).pop(keywords);
+                          // 완료 처리 - 홈 화면으로 이동 (예시)
+                          // Navigator.of(context).pushAndRemoveUntil(
+                          //   MaterialPageRoute(
+                          //     builder: (context) => const HomeScreen(),
+                          //   ),
+                          //   (route) => false, // 모든 이전 화면 제거
+                          // );
                         }
                       : null,
                   style: ElevatedButton.styleFrom(
@@ -249,10 +257,12 @@ class _KeywordSelectPageState extends State<KeywordSelectPage> {
                       borderRadius: BorderRadius.circular(28),
                     ),
                     elevation: keywords.isNotEmpty ? 4 : 0,
-                    shadowColor: const Color(0xFF0565FF).withOpacity(0.3),
+                    shadowColor: keywords.isNotEmpty
+                        ? const Color(0xFF0565FF).withOpacity(0.3)
+                        : null,
                   ),
                   child: Text(
-                    '완료 (${keywords.length}/10)',
+                    '완료 (${keywords.length}/20)',
                     style: const TextStyle(
                       fontFamily: 'Pretendard',
                       fontWeight: FontWeight.w700,

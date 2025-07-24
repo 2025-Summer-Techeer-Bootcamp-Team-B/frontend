@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'category_select.dart';
 
 class MediaSelectPage extends StatefulWidget {
   const MediaSelectPage({super.key});
@@ -15,6 +16,7 @@ class _MediaSelectPageState extends State<MediaSelectPage> {
   ];
 
   int? selectedIndex;
+  final Set<int> selected = {};
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +30,7 @@ class _MediaSelectPageState extends State<MediaSelectPage> {
             Padding(
               padding: const EdgeInsets.only(left: 16.0, top: 24.0, bottom: 0),
               child: IconButton(
-                icon: Icon(
+                icon: const Icon(
                   Icons.arrow_back_ios_new_rounded,
                   color: Color(0xFF0565FF),
                   size: 28,
@@ -38,12 +40,12 @@ class _MediaSelectPageState extends State<MediaSelectPage> {
                 },
                 splashRadius: 24,
                 padding: EdgeInsets.zero,
-                constraints: BoxConstraints(),
+                constraints: const BoxConstraints(),
               ),
             ),
             // 타이틀/설명/안내문구 (피그마 기준, 중앙 정렬)
-            Padding(
-              padding: const EdgeInsets.only(
+            const Padding(
+              padding: EdgeInsets.only(
                 left: 32.0,
                 right: 32.0,
                 top: 16.0,
@@ -68,7 +70,7 @@ class _MediaSelectPageState extends State<MediaSelectPage> {
                             color: Color(0xFF222222),
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         Text(
                           '미선택 시 랜덤으로 선택됩니다',
                           textAlign: TextAlign.center,
@@ -90,7 +92,7 @@ class _MediaSelectPageState extends State<MediaSelectPage> {
             Expanded(
               child: GridView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 32),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
                   mainAxisSpacing: 28,
                   crossAxisSpacing: 18,
@@ -99,11 +101,15 @@ class _MediaSelectPageState extends State<MediaSelectPage> {
                 itemCount: mediaList.length,
                 itemBuilder: (context, index) {
                   final media = mediaList[index];
-                  final isSelected = selectedIndex == index;
+                  final isSelected = selected.contains(index);
                   return GestureDetector(
                     onTap: () {
                       setState(() {
-                        selectedIndex = index;
+                        if (isSelected) {
+                          selected.remove(index);
+                        } else {
+                          selected.add(index);
+                        }
                       });
                     },
                     child: Column(
@@ -113,7 +119,7 @@ class _MediaSelectPageState extends State<MediaSelectPage> {
                             PhysicalModel(
                               color: Colors.white,
                               elevation: 6,
-                              shadowColor: Color(0x220565FF),
+                              shadowColor: const Color(0x220565FF),
                               borderRadius: BorderRadius.circular(18),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(18),
@@ -130,12 +136,12 @@ class _MediaSelectPageState extends State<MediaSelectPage> {
                                 top: 6,
                                 right: 6,
                                 child: Container(
-                                  decoration: BoxDecoration(
+                                  decoration: const BoxDecoration(
                                     color: Color(0xFF0565FF),
                                     shape: BoxShape.circle,
                                   ),
-                                  padding: EdgeInsets.all(3),
-                                  child: Icon(
+                                  padding: const EdgeInsets.all(3),
+                                  child: const Icon(
                                     Icons.check,
                                     color: Colors.white,
                                     size: 18,
@@ -147,7 +153,7 @@ class _MediaSelectPageState extends State<MediaSelectPage> {
                         const SizedBox(height: 10),
                         Text(
                           media['name']!,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontFamily: 'Pretendard',
                             fontWeight: FontWeight.w500,
                             fontSize: 15,
@@ -170,21 +176,30 @@ class _MediaSelectPageState extends State<MediaSelectPage> {
                   child: PhysicalModel(
                     color: Colors.transparent,
                     elevation: 8,
-                    shadowColor: Color(0x220565FF),
+                    shadowColor: const Color(0x220565FF),
                     borderRadius: BorderRadius.circular(28),
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF0565FF),
+                        backgroundColor: selected.isNotEmpty
+                            ? const Color(0xFF0565FF)
+                            : const Color(0xFFE0E0E0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(28),
                         ),
                         elevation: 0,
                       ),
-                      onPressed: () {
-                        // TODO: 선택 완료 처리
-                      },
+                      onPressed: selected.isNotEmpty
+                          ? () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const CategorySelectPage(),
+                                ),
+                              );
+                            }
+                          : null,
                       child: CustomPaint(
-                        size: Size(40, 32),
+                        size: const Size(40, 32),
                         painter: _LongArrowPainter(),
                       ),
                     ),

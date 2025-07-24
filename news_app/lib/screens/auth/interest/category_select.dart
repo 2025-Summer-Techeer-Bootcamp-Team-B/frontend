@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'keyword_select.dart';
+import 'media_select.dart';
 
 class CategorySelectPage extends StatefulWidget {
   const CategorySelectPage({super.key});
@@ -34,9 +36,9 @@ class _CategorySelectPageState extends State<CategorySelectPage> {
           child: Container(
             width: 393,
             height: deviceHeight,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.black, width: 1),
-            ),
+            // decoration: BoxDecoration(
+            //   border: Border.all(color: Colors.black, width: 1),
+            // ),
             padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -162,15 +164,36 @@ class _CategorySelectPageState extends State<CategorySelectPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                // 최소 3개 선택 안내 텍스트
+                const Center(
+                  child: Text(
+                    '최소 3개 선택',
+                    style: TextStyle(
+                      color: Color(0xFF0565FF),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Pretendard',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 // 하단 다음 버튼
                 Center(
                   child: GestureDetector(
-                    onTap: selected.isNotEmpty ? () {} : null,
+                    onTap: selected.length >= 3
+                        ? () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const KeywordSelectPage(),
+                              ),
+                            );
+                          }
+                        : null,
                     child: Container(
                       width: 120,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: selected.isNotEmpty
+                        color: selected.length >= 3
                             ? const Color(0xFF0565FF)
                             : const Color(0xFFE0E0E0),
                         borderRadius: BorderRadius.circular(32),
