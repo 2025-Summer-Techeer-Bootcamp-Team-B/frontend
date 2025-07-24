@@ -17,15 +17,15 @@ class _BriPlaylistScreenState extends State<BriPlaylistScreen> {
   bool isPlaying = true;
   int _selectedIndex = 0; // 하단 네비게이션 상태
 
-  final List<String> categories = ['정치', '문화', 'IT·과학', '스포츠', '재난·기후·환경'];
+  final List<String> categories = ['경제', '문화', 'IT·과학', '스포츠', '재난·기후·환경'];
   final List<List<Map<String, String>>> initialArticlesByCategory = [
     [
       {
-        'title': "'케이팝 데몬 헌터스' OST, 빌보드 싱글 7위",
-        'reporter': 'JTBC 김하은 기자',
+        'title': "'역대급 실적' SK하이닉스, 상반기 성과급 '150%' 지급",
+        'reporter': '연합뉴스',
       },
       {
-        'title': '여야, 경찰개혁 공청회서 격돌',
+        'title': '민생 지원금 지급 시작... 국민들 기대감 높아',
         'reporter': 'JTBC 김하은 기자',
       },
     ],

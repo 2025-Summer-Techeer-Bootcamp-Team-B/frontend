@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../briefing/bri_playlist.dart';
 
 class CustomHomeScreen extends StatefulWidget {
   const CustomHomeScreen({Key? key}) : super(key: key);
@@ -86,44 +87,62 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
                     ),
                     const SizedBox(height: 18),
                     // 오늘의 뉴스 섹션
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        children: [
-                          Text(
-                            '오늘의 뉴스',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
-                            ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const BriPlaylistScreen(),
                           ),
-                        ],
+                        );
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        child: Row(
+                          children: [
+                            Text(
+                              '오늘의 뉴스',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 10),
                     SizedBox(
                       height: 120,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        children: [
-                          _buildTodayNewsCard(
-                              category: '경제',
-                              iconPath: 'assets/a_image/economy.png'),
-                          const SizedBox(width: 16),
-                          _buildTodayNewsCard(
-                              category: '정치',
-                              iconPath: 'assets/a_image/politics_icon.webp'),
-                          const SizedBox(width: 16),
-                          _buildTodayNewsCard(
-                              category: '이슈',
-                              iconPath: 'assets/a_image/issue_icon.webp'),
-                          const SizedBox(width: 16),
-                          _buildTodayNewsCard(
-                              category: 'IT',
-                              iconPath: 'assets/a_image/IT_icon.webp'),
-                        ],
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const BriPlaylistScreen(),
+                            ),
+                          );
+                        },
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          children: [
+                            _buildTodayNewsCard(
+                                category: '경제',
+                                iconPath: 'assets/a_image/economy.png'),
+                            const SizedBox(width: 16),
+                            _buildTodayNewsCard(
+                                category: '정치',
+                                iconPath: 'assets/a_image/politics_icon.webp'),
+                            const SizedBox(width: 16),
+                            _buildTodayNewsCard(
+                                category: '이슈',
+                                iconPath: 'assets/a_image/issue_icon.webp'),
+                            const SizedBox(width: 16),
+                            _buildTodayNewsCard(
+                                category: 'IT',
+                                iconPath: 'assets/a_image/IT_icon.webp'),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 18),

@@ -7,15 +7,34 @@ class BriCaptionScreen extends StatefulWidget {
   final String imageUrl;
   final String title;
   final String reporter;
+  final String category;
   final List<String> scriptLines;
 
   const BriCaptionScreen({
-    super.key,
     required this.imageUrl,
     required this.title,
     required this.reporter,
-    required this.scriptLines,
-  });
+    this.category = '경제',
+    this.scriptLines = const [
+      'SK하이닉스는 올해 상반기에 구성원들에게',
+      "월 기본급의 150%를 '생산성 격려금'으로 지급할 예정이다.",
+      '',
+      '이는 고대역폭 메모리 시장 1위를 차지하며',
+      '역대급 실적을 달성한 결과이다.',
+      '',
+      'PI는 영업이익률에 따라 지급되며,',
+      'SK하이닉스는 1분기에 42%의 영업이익률을 기록했다.',
+      '',
+      '2분기 실적은 매출 20조 6천164억 원,',
+      '영업이익 9조 222억 원으로 예상되며,',
+      '하반기에도 높은 실적이 예상되어',
+      '성과급이 상승할 것으로 전망된다.',
+      '',
+      '증권가는 SK하이닉스의 연간 영업이익이',
+      '37조 원에 달할 것으로 예상하고 있다.',
+    ],
+    Key? key,
+  }) : super(key: key);
 
   @override
   State<BriCaptionScreen> createState() => _BriCaptionScreenState();
@@ -70,7 +89,7 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
   void _setupAudioPlayer() async {
     try {
       // 음성 파일 로드 - 크롬 호환성을 위해 설정 추가
-      await _audioPlayer.setSource(AssetSource('a_voice/1번 남자.mp3'));
+      await _audioPlayer.setSource(AssetSource('a_voice/SK_tts.mp3'));
 
       // 크롬에서의 오디오 재생을 위한 설정
       await _audioPlayer.setReleaseMode(ReleaseMode.loop);
@@ -235,15 +254,34 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
                     children: [
                       // 대표 이미지 (왼쪽)
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                         child: Image.asset(
-                          widget.imageUrl,
-                          width: 90,
-                          height: 90,
+                          'assets/a_image/SKhynix.jpg',
+                          width: 64,
+                          height: 64,
                           fit: BoxFit.cover,
                         ),
                       ),
                       const SizedBox(width: 20),
+                      // 카테고리명 추가
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0565FF),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          widget.category,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Pretendard',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
                       // 타이틀 (오른쪽, 사진에 겹치지 않게)
                       Expanded(
                         child: Column(
@@ -368,7 +406,7 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => BriPlaylistScreen(),
+                              builder: (context) => const BriPlaylistScreen(),
                             ),
                           );
                         },

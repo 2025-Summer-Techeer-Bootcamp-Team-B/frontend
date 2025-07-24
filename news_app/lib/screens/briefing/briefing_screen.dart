@@ -76,9 +76,9 @@ class _BriefingScreenState extends State<BriefingScreen>
       // Mock data - replace with actual API call
       // TODO: Replace with real API endpoint
       final mockApiResponse = {
-        'title': "정부, 새로운 정책 발표... 국민들의 관심 집중",
+        'title': "'역대급 실적' SK하이닉스, 상반기 성과급 '150%' 지급",
         'source': "연합뉴스",
-        'imageUrl': 'assets/a_image/burn_airplane.png',
+        'imageUrl': 'assets/a_image/SKhynix',
         'audioDuration': 123, // 2:03 in seconds
       };
 
@@ -197,21 +197,48 @@ class _BriefingScreenState extends State<BriefingScreen>
                 // Main Article Image - Smaller square shape
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Container(
-                    width: 320, // Increased from 280
-                    height: 280, // Keep height the same
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.asset(
-                        articleImageUrl, // Dynamic image from API
-                        fit: BoxFit.cover,
-                        width: 320,
-                        height: 280,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 카테고리명
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0565FF),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Text(
+                          '경제',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Pretendard',
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      // 기존 이미지
+                      Expanded(
+                        child: Container(
+                          width: 320,
+                          height: 280,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.asset(
+                              'assets/a_image/SKhynix.jpg',
+                              fit: BoxFit.cover,
+                              width: 320,
+                              height: 280,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 // 이미지 아래에 제목+출처+아이콘 Row 추가 (뮤직앱 스타일)
@@ -407,7 +434,7 @@ class _BriefingScreenState extends State<BriefingScreen>
                   borderRadius: BorderRadius.circular(40),
                 ),
                 child: const Text(
-                  '정치',
+                  '경제',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18, // 16에서 18로 키움
@@ -453,13 +480,29 @@ class _BriefingScreenState extends State<BriefingScreen>
                               imageUrl: articleImageUrl,
                               title: articleTitle,
                               reporter: articleSource,
+                              category: '경제',
                               scriptLines: const [
-                                "최근 인공지능 기술이 뉴스 소비 방식을 크게 변화시키고 있습니다.",
-                                "AI는 사용자의 관심사를 분석해 맞춤형 뉴스를 추천해줍니다.",
-                                "음성 합성 기술로 뉴스를 직접 읽어주는 서비스도 등장했습니다.",
-                                "이로 인해 시각장애인 등 정보 접근성이 높아졌다는 평가입니다.",
-                                "하지만 가짜뉴스 확산 등 부작용에 대한 우려도 커지고 있습니다.",
-                                "전문가들은 AI 활용의 긍정적 효과와 함께 윤리적 기준 마련이 필요하다고 강조합니다.",
+                                'SK하이닉스는 올해 상반기에',
+                                '구성원들에게 월 기본급의',
+                                "150%를 '생산성 격려금'으로",
+                                '지급할 예정이다.',
+                                '',
+                                '이는 고대역폭 메모리 시장 1위를',
+                                '차지하며 역대급 실적을 달성한 결과이다.',
+                                '',
+                                'PI는 영업이익률에 따라 지급되며,',
+                                'SK하이닉스는 1분기에 42%의',
+                                '영업이익률을 기록했다.',
+                                '',
+                                '2분기 실적은 매출 20조',
+                                '6천164억 원,',
+                                '영업이익 9조 222억 원으로 예상되며,',
+                                '하반기에도 높은 실적이 예상되어',
+                                '성과급이 상승할 것으로 전망된다.',
+                                '',
+                                '증권가는 SK하이닉스의 연간',
+                                '영업이익이 37조 원에 달할 것으로',
+                                '예상하고 있다.',
                               ],
                             ),
                           ),

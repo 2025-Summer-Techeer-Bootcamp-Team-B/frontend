@@ -13,12 +13,18 @@ class _ChatMessage {
   _ChatMessage({required this.text, required this.isUser});
 }
 
-class _BriChatBotScreenState extends State<BriChatBotScreen> {
+class _BriChatBotScreenState extends State<BriChatBotScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   final List<_ChatMessage> _messages = [
     _ChatMessage(text: "안녕하세요! 궁금한 점이 있으면 언제든 물어보세요.", isUser: false),
   ];
+
+  late AnimationController _titleAnimationController;
+  late Animation<Offset> _titleAnimation;
+  bool shouldAnimate = false;
+  final String articleTitle = "'역대급 실적' SK하이닉스, 상반기 성과급 '150%' 지급";
 
   void _sendMessage() {
     final text = _controller.text.trim();
@@ -31,6 +37,30 @@ class _BriChatBotScreenState extends State<BriChatBotScreen> {
           _messages.add(_ChatMessage(text: "챗GPT의 답변 예시입니다.", isUser: false));
         });
       });
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _titleAnimationController = AnimationController(
+      duration: const Duration(seconds: 8),
+      vsync: this,
+    );
+    _titleAnimation = Tween<Offset>(
+      begin: const Offset(0, 0),
+      end: const Offset(-0.3, 0),
+    ).animate(CurvedAnimation(
+      parent: _titleAnimationController,
+      curve: Curves.linear,
+    ));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (articleTitle.length > 14) {
+        setState(() {
+          shouldAnimate = true;
+        });
+        _titleAnimationController.repeat();
+      }
     });
   }
 
@@ -74,30 +104,17 @@ class _BriChatBotScreenState extends State<BriChatBotScreen> {
                           onTap: () {
                             Navigator.of(context).pop();
                           },
-                          child: Container(
-                            width: 64,
-                            height: 64,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.06),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            alignment: Alignment.center,
-                            child: const Text(
-                              '뉴스 사진',
-                              style: TextStyle(
-                                  color: Colors.black54, fontSize: 13),
-                              textAlign: TextAlign.center,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.asset(
+                              'assets/a_image/SKhynix.jpg',
+                              width: 64,
+                              height: 64,
+                              fit: BoxFit.cover,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 12),
                         // 카테고리 + 제목
                         Expanded(
                           child: Column(
@@ -111,7 +128,7 @@ class _BriChatBotScreenState extends State<BriChatBotScreen> {
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: const Text(
-                                  '정치',
+                                  '경제',
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: Colors.white,
@@ -121,13 +138,43 @@ class _BriChatBotScreenState extends State<BriChatBotScreen> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              const Text(
-                                '기사 제목',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                  fontFamily: 'Pretendard',
+                              ClipRect(
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: SizedBox(
+                                    height: 24,
+                                    width: MediaQuery.of(context).size.width -
+                                        64 -
+                                        24 -
+                                        24 -
+                                        12, // 전체 - 사진 - 좌우패딩 - 여백
+                                    child: shouldAnimate
+                                        ? SlideTransition(
+                                            position: _titleAnimation,
+                                            child: Text(
+                                              articleTitle,
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.black,
+                                                fontFamily: 'Pretendard',
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          )
+                                        : Text(
+                                            articleTitle,
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.black,
+                                              fontFamily: 'Pretendard',
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                  ),
                                 ),
                               ),
                             ],
@@ -275,7 +322,7 @@ class _BriChatBotScreenState extends State<BriChatBotScreen> {
 
   @override
   void dispose() {
-    _focusNode.dispose();
+    _titleAnimationController.dispose();
     super.dispose();
   }
 }

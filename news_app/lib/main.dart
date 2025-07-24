@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         fontFamily: 'Pretendard',
       ),
-      home: const MediaSelectPage(),
+      home: const CustomHomeScreen(),
     );
   }
 }
