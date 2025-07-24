@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'screens/favorites/favorites_screen_toggle_off.dart';
+import 'screens/favorites/fav_s_t_off.dart';
+import 'screens/favorites/favorites_screen_toggle_on.dart';
+import 'screens/home/home_screen.dart';
+import 'screens/briefing/bri_playlist.dart';
 // import 'screens/home/dfs.dart';
 // import 'screens/favorites/favorites_screen_toggle_off.dart';
 
@@ -19,7 +22,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         fontFamily: 'Pretendard',
       ),
-      home: const FavoritesCategoryScreen(),
+      home: const BriPlaylistScreen(),
     );
   }
 }

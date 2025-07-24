@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:news_app/screens/briefing/bri_playlist.dart'; // Added import for BriPlaylistScreen
 
 class BriCaptionScreen extends StatefulWidget {
   final String imageUrl;
@@ -154,12 +155,10 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
   }
 
   void _checkTitleAnimation() {
-    if (widget.title.length > 20) {
-      setState(() {
-        shouldAnimate = true;
-      });
-      _titleAnimationController.repeat();
-    }
+    setState(() {
+      shouldAnimate = true;
+    });
+    _titleAnimationController.repeat();
   }
 
   void _scrollToCurrentLine() {
@@ -234,7 +233,7 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 대표 이미지 (더 크게)
+                      // 대표 이미지 (왼쪽)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(16),
                         child: Image.asset(
@@ -245,36 +244,37 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
                         ),
                       ),
                       const SizedBox(width: 20),
-                      // 제목, 기자명
+                      // 타이틀 (오른쪽, 사진에 겹치지 않게)
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Title with animation
-                            shouldAnimate
-                                ? SlideTransition(
-                                    position: _titleAnimation,
-                                    child: Text(
+                            ClipRect(
+                              child: shouldAnimate
+                                  ? SlideTransition(
+                                      position: _titleAnimation,
+                                      child: Text(
+                                        widget.title,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Arial',
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.visible,
+                                      ),
+                                    )
+                                  : Text(
                                       widget.title,
                                       style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        fontFamily: 'Arial', // 기본 폰트로 변경
+                                        fontFamily: 'Arial',
                                       ),
                                       maxLines: 1,
-                                      overflow: TextOverflow.visible,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  )
-                                : Text(
-                                    widget.title,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: 'Arial', // 기본 폰트로 변경
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                            ),
                             const SizedBox(height: 4),
                             Text(
                               widget.reporter,
@@ -282,7 +282,7 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
                                 fontSize: 15,
                                 color: Colors.blue,
                                 fontWeight: FontWeight.w600,
-                                fontFamily: 'Arial', // 기본 폰트로 변경
+                                fontFamily: 'Arial',
                               ),
                             ),
                           ],
@@ -343,6 +343,62 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
                         );
                       },
                     ),
+                  ),
+                ),
+                // 하단 3개 버튼 (브리핑과 동일)
+                Padding(
+                  padding: const EdgeInsets.only(
+                      bottom: 24, left: 32, right: 32), // 40에서 24로 변경
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // 리스트 버튼
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: Image.asset(
+                          'assets/a_image/list-music.png',
+                          width: 28,
+                          height: 28,
+                        ),
+                      ),
+                      // CC 버튼 (리스트로 이동)
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => BriPlaylistScreen(),
+                            ),
+                          );
+                        },
+                        child: Image.asset(
+                          'assets/a_image/caption.png',
+                          width: 28,
+                          height: 28,
+                        ),
+                      ),
+                      // 기사 원문보기 버튼
+                      Column(
+                        children: [
+                          Image.asset(
+                            'assets/a_image/newspaper.png',
+                            width: 28,
+                            height: 28,
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            '기사 원문보기',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 12,
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ],

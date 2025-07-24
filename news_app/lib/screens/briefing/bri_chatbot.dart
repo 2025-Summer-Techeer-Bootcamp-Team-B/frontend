@@ -70,26 +70,31 @@ class _BriChatBotScreenState extends State<BriChatBotScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // 기사 사진 (placeholder)
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.06),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          alignment: Alignment.center,
-                          child: const Text(
-                            '뉴스 사진',
-                            style:
-                                TextStyle(color: Colors.black54, fontSize: 13),
-                            textAlign: TextAlign.center,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.06),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            alignment: Alignment.center,
+                            child: const Text(
+                              '뉴스 사진',
+                              style: TextStyle(
+                                  color: Colors.black54, fontSize: 13),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 16),

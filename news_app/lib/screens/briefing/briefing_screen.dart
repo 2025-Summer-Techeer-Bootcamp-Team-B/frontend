@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:math';
 import 'bri_playlist.dart';
 import 'bri_caption.dart'; // Added import for BriCaptionScreen
+import 'bri_chatbot.dart'; // BriChatBotScreen import 추가
 
 class BriefingScreen extends StatefulWidget {
   const BriefingScreen({super.key});
@@ -42,7 +43,7 @@ class _BriefingScreenState extends State<BriefingScreen>
 
     _titleAnimation = Tween<Offset>(
       begin: const Offset(0, 0),
-      end: const Offset(-1, 0),
+      end: const Offset(-0.3, 0),
     ).animate(CurvedAnimation(
       parent: _titleAnimationController,
       curve: Curves.linear,
@@ -100,9 +101,8 @@ class _BriefingScreenState extends State<BriefingScreen>
   }
 
   void _checkTitleAnimation() {
-    // In Flutter, we'll use a simpler approach for text overflow detection
-    // For now, we'll animate if the title is long
-    if (articleTitle.length > 20) {
+    // 글자 수가 9자 초과일 때 애니메이션 적용
+    if (articleTitle.length > 9) {
       setState(() {
         shouldAnimate = true;
       });
@@ -169,11 +169,12 @@ class _BriefingScreenState extends State<BriefingScreen>
     return Scaffold(
       backgroundColor: Colors.white,
       body: Container(
-        width: 393,
-        height: 852,
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.black),
-        ),
+        // width: 393,
+        // height: 852,
+        // 검은 테두리 제거
+        // decoration: BoxDecoration(
+        //   border: Border.all(color: Colors.black),
+        // ),
         child: Stack(
           children: [
             // Main Content - Fixed layout for iPhone 15
@@ -213,78 +214,67 @@ class _BriefingScreenState extends State<BriefingScreen>
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 16), // Reduced spacing
-
-                // Article Title and Meta
+                // 이미지 아래에 제목+출처+아이콘 Row 추가 (뮤직앱 스타일)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      // 제목+출처
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              articleTitle,
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Pretendard',
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              articleSource,
+                              style: const TextStyle(
+                                color: Color(0xFF0565FF),
+                                fontSize: 16,
+                                fontFamily: 'Pretendard',
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // 아이콘
                       Row(
                         children: [
-                          // Title with animation - Single line only
-                          Expanded(
-                            child: shouldAnimate
-                                ? SlideTransition(
-                                    position: _titleAnimation,
-                                    child: Text(
-                                      articleTitle, // Dynamic title from API
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 22, // Slightly smaller
-                                        fontWeight: FontWeight.w500,
-                                        fontFamily: 'Pretendard',
-                                      ),
-                                      maxLines: 1, // Force single line
-                                      overflow: TextOverflow.visible,
-                                    ),
-                                  )
-                                : Text(
-                                    articleTitle, // Dynamic title from API
-                                    style: const TextStyle(
-                                      color: Colors.black,
-                                      fontSize: 22, // Slightly smaller
-                                      fontWeight: FontWeight.w500,
-                                      fontFamily: 'Pretendard',
-                                    ),
-                                    maxLines: 1, // Force single line
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                          Image.asset(
+                            'assets/a_image/star.png',
+                            width: 28,
+                            height: 28,
                           ),
-                          const SizedBox(width: 12), // Reduced spacing
-
-                          // Icons using assets
-                          Row(
-                            children: [
-                              // Star Icon from assets
-                              Image.asset(
-                                'assets/a_image/star.png',
-                                width: 28,
-                                height: 28,
-                              ),
-                              const SizedBox(width: 8), // Reduced spacing
-
-                              // Chatbot Icon from assets
-                              Image.asset(
-                                'assets/a_image/chatbot.webp',
-                                width: 36,
-                                height: 36,
-                              ),
-                            ],
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const BriChatBotScreen(),
+                                ),
+                              );
+                            },
+                            child: Image.asset(
+                              'assets/a_image/chatbot.webp',
+                              width: 36,
+                              height: 36,
+                            ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 8), // Reduced spacing
-                      Text(
-                        articleSource, // Dynamic source from API
-                        style: const TextStyle(
-                          color: Color(0xFF0565FF),
-                          fontSize: 16, // Slightly smaller
-                          fontFamily: 'Pretendard',
-                          fontWeight: FontWeight.w500,
-                        ),
                       ),
                     ],
                   ),
@@ -407,11 +397,11 @@ class _BriefingScreenState extends State<BriefingScreen>
 
             // Category Tag - Positioned in Stack
             Positioned(
-              left: 12,
+              left: 14, // 12에서 14로 변경 (오른쪽으로 2픽셀 이동)
               top: 96,
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 6), // Reduced padding
+                    horizontal: 24, vertical: 9), // 패딩을 살짝 키움
                 decoration: BoxDecoration(
                   color: const Color(0xFF0565FF),
                   borderRadius: BorderRadius.circular(40),
@@ -420,7 +410,7 @@ class _BriefingScreenState extends State<BriefingScreen>
                   '정치',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 16, // Slightly smaller
+                    fontSize: 18, // 16에서 18로 키움
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Pretendard',
                   ),
@@ -430,7 +420,7 @@ class _BriefingScreenState extends State<BriefingScreen>
 
             // Bottom Navigation using assets
             Positioned(
-              bottom: 20, // Changed from 64 to 20 to move down
+              bottom: 40, // 20에서 40으로 올려서 버튼을 위로 이동
               left: 0,
               right: 0,
               child: Container(

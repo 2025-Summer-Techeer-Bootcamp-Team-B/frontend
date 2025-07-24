@@ -1,579 +1,461 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Marquee 패키지를 사용하기 위해 추가
-import 'package:marquee/marquee.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class CustomHomeScreen extends StatefulWidget {
+  const CustomHomeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<CustomHomeScreen> createState() => _CustomHomeScreenState();
+}
+
+class _CustomHomeScreenState extends State<CustomHomeScreen> {
+  int _selectedIndex = 0;
+  bool _isPlaying = false;
+  String _playingTitle = '';
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
-        child: SizedBox(
-          width: 393,
-          height: 852,
-          child: Stack(
-            children: [
-              // 홈 타이틀
-              Positioned(
-                left: 20,
-                top: 15,
-                child: Text(
-                  '홈',
-                  style: TextStyle(
-                    fontFamily: 'Pretendard',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 28,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-              // 실시간 속보 아이콘 + 텍스트
-              Positioned(
-                left: 20,
-                top: 40,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      'assets/a_image/home_newsflash_icon.png',
-                      width: 28,
-                      height: 28,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '실시간 속보',
-                      style: TextStyle(
-                        fontFamily: 'Pretendard',
-                        fontWeight: FontWeight.w600,
-                        fontSize: 20,
-                        color: Color(0xFF0565FF),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // 실시간 기사 카드 1 (검은 네모 + 사진이 위에)
-              Positioned(
-                left: 20,
-                top: 100,
-                child: Stack(
-                  children: [
-                    // 검은 네모 배경
-                    Container(
-                      width: 220,
-                      height: 260,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(13),
-                        color: Colors.black,
-                      ),
-                    ),
-                    // 사진이 위에
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(13),
-                        child: Image.asset(
-                          'assets/a_image/home_news1.jpg',
-                          width: 220,
-                          height: 120,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    // 카테고리 태그, 기사 제목 등 기존 내용은 그대로
-                    Positioned(
-                      top: 12,
-                      left: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0565FF),
-                          borderRadius: BorderRadius.circular(40),
-                        ),
-                        child: const Text(
-                          '문화',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    // 기사 제목에 marquee 적용
-                    Positioned(
-                      bottom: 70,
-                      left: 12,
-                      right: 12,
-                      child: SizedBox(
-                        height: 20,
-                        child: Marquee(
-                          text: "'케이팝 데몬 헌터스' OST, 빌보드",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          scrollAxis: Axis.horizontal,
-                          blankSpace: 20.0,
-                          velocity: 30.0,
-                          pauseAfterRound: Duration(seconds: 1),
-                          startPadding: 0.0,
-                          accelerationDuration: Duration(seconds: 1),
-                          accelerationCurve: Curves.linear,
-                          decelerationDuration: Duration(milliseconds: 500),
-                          decelerationCurve: Curves.easeOut,
-                        ),
-                      ),
-                    ),
-                    const Positioned(
-                      bottom: 50,
-                      left: 12,
-                      child: Text(
-                        '기사 출처',
-                        style: TextStyle(
-                          color: Color(0xFFC69F9F),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 12,
-                      left: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(19),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.play_arrow, size: 16, color: Colors.black),
-                            SizedBox(width: 3),
-                            Text(
-                              '5 : 00',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // 실시간 기사 카드 2도 동일하게 적용
-              Positioned(
-                left: 250,
-                top: 100,
-                child: Stack(
-                  children: [
-                    // 검은 네모 배경
-                    Container(
-                      width: 220,
-                      height: 260,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(13),
-                        color: Colors.black,
-                      ),
-                    ),
-                    // 사진이 위에
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(13),
-                        child: Image.asset(
-                          'assets/a_image/home_news2.jpg',
-                          width: 220,
-                          height: 120,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    // 카테고리 태그, 기사 제목 등 기존 내용은 그대로
-                    Positioned(
-                      top: 12,
-                      left: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0565FF),
-                          borderRadius: BorderRadius.circular(40),
-                        ),
-                        child: const Text(
-                          '정치',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    // 기사 제목에 marquee 적용
-                    Positioned(
-                      bottom: 70,
-                      left: 12,
-                      right: 12,
-                      child: SizedBox(
-                        height: 20,
-                        child: Marquee(
-                          text: '여야, 검찰 개혁 공청회서 격돌',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          scrollAxis: Axis.horizontal,
-                          blankSpace: 20.0,
-                          velocity: 30.0,
-                          pauseAfterRound: Duration(seconds: 1),
-                          startPadding: 0.0,
-                          accelerationDuration: Duration(seconds: 1),
-                          accelerationCurve: Curves.linear,
-                          decelerationDuration: Duration(milliseconds: 500),
-                          decelerationCurve: Curves.easeOut,
-                        ),
-                      ),
-                    ),
-                    const Positioned(
-                      bottom: 50,
-                      left: 12,
-                      child: Text(
-                        '기사 출처',
-                        style: TextStyle(
-                          color: Color(0xFFC69F9F),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 12,
-                      left: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(19),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.play_arrow, size: 16, color: Colors.black),
-                            SizedBox(width: 3),
-                            Text(
-                              '4 : 30',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // 오늘의 뉴스 타이틀
-              Positioned(
-                left: 20,
-                top: 410,
-                child: Text(
-                  '오늘의 뉴스',
-                  style: TextStyle(
-                    fontFamily: 'Pretendard',
-                    fontWeight: FontWeight.w600, // 실시간 속보와 동일
-                    fontSize: 20,
-                    color: Color(0xFF0565FF),
-                  ),
-                ),
-              ),
-              // 오늘의 뉴스 카테고리 카드들
-              Positioned(
-                left: 0,
-                top: 440,
-                child: SizedBox(
-                  width: 393,
-                  height: 130,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: BouncingScrollPhysics(),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 20),
-                        // 정치
-                        Container(
-                          width: 120,
-                          height: 120,
-                          margin: const EdgeInsets.only(right: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey.shade200),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.15),
-                                blurRadius: 12,
-                                offset: Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // 제목(가운데 정렬)
-                              SizedBox(
-                                height: 22,
-                                width: 90,
-                                child: Text(
-                                  '정치',
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.black,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              // 아이콘(사진이 아래)
-                              Image.asset(
-                                'assets/a_image/politics_icon.webp',
-                                width: 75,
-                                height: 65,
-                                fit: BoxFit.contain,
-                              ),
-                            ],
-                          ),
-                        ),
-                        // 경제
-                        Container(
-                          width: 120,
-                          height: 120,
-                          margin: const EdgeInsets.only(right: 16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFCEF6FF),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey.shade200),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.15),
-                                blurRadius: 12,
-                                offset: Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // 제목(가운데 정렬)
-                              SizedBox(
-                                height: 22,
-                                width: 90,
-                                child: Text(
-                                  '경제',
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.black,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              // 아이콘(사진이 아래)
-                              Image.asset(
-                                'assets/a_image/economy.png',
-                                width: 70,
-                                height: 70,
-                                fit: BoxFit.contain,
-                              ),
-                            ],
-                          ),
-                        ),
-                        // 사회
-                        Container(
-                          width: 120,
-                          height: 120,
-                          margin: const EdgeInsets.only(right: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey.shade200),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.15),
-                                blurRadius: 12,
-                                offset: Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // 제목(가운데 정렬)
-                              SizedBox(
-                                height: 22,
-                                width: 90,
-                                child: Text(
-                                  '사회',
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.black,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              // 아이콘(사진이 아래)
-                              Image.asset(
-                                'assets/a_image/society_icon.webp',
-                                width: 80,
-                                height: 80,
-                                fit: BoxFit.contain,
-                              ),
-                            ],
-                          ),
-                        ),
-                        // 필요시 더 추가
-                        const SizedBox(width: 20),
-                      ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            // 상단 타이틀 (프로필 사진 제거)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Text(
+                    '홈',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
                     ),
                   ),
-                ),
+                ],
               ),
-              // 하단 네비게이션 바
-              Positioned(
-                left: 0,
-                bottom: 0,
+            ),
+            // 나머지 영역 스크롤 가능하게 Expanded+SingleChildScrollView
+            Expanded(
+              child: SingleChildScrollView(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 얇은 회색 경계선
-                    Container(
-                      width: 393,
-                      height: 1,
-                      color: Color(0xFFBDBDBD), // 연한 회색
-                    ),
-                    // 네비게이션 바 본체
-                    Container(
-                      width: 393,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.grey.withOpacity(0.03),
-                            Colors.grey.withOpacity(0.53),
-                          ],
-                        ),
+                    const SizedBox(height: 8),
+                    // 실시간 속보 섹션 (가로 스크롤)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
+                        children: [
+                          Image.asset(
+                            'assets/a_image/home_newsflash_icon.png',
+                            width: 38,
+                            height: 38,
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            '실시간 속보',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            // 설정
-                            Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Image.asset(
-                                  'assets/a_image/pl_setting_icon.png',
-                                  width: 20,
-                                  height: 20,
-                                ),
-                                const SizedBox(height: 3),
-                                const Text(
-                                  '설정',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w300,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ],
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      height: 240, // 카드 높이 조정
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        itemCount: 5, // 임시
+                        separatorBuilder: (_, __) => const SizedBox(width: 16),
+                        itemBuilder: (context, idx) {
+                          return _buildPodcastStyleCard();
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    // 오늘의 뉴스 섹션
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
+                        children: [
+                          Text(
+                            '오늘의 뉴스',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
                             ),
-                            // 설정-즐겨찾기 사이 구분선
-                            Container(
-                              width: 1,
-                              height: 30,
-                              color: Color(0xFFBDBDBD),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      height: 120,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        children: [
+                          _buildTodayNewsCard(
+                              category: '경제',
+                              iconPath: 'assets/a_image/economy.png'),
+                          const SizedBox(width: 16),
+                          _buildTodayNewsCard(
+                              category: '정치',
+                              iconPath: 'assets/a_image/politics_icon.webp'),
+                          const SizedBox(width: 16),
+                          _buildTodayNewsCard(
+                              category: '이슈',
+                              iconPath: 'assets/a_image/issue_icon.webp'),
+                          const SizedBox(width: 16),
+                          _buildTodayNewsCard(
+                              category: 'IT',
+                              iconPath: 'assets/a_image/IT_icon.webp'),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    // 키워드별 뉴스 섹션
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
+                        children: [
+                          Text(
+                            '키워드별 뉴스',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
                             ),
-                            // 즐겨찾기
-                            Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Image.asset(
-                                  'assets/a_image/pl_star_icon.png',
-                                  width: 20,
-                                  height: 20,
-                                ),
-                                const SizedBox(height: 3),
-                                const Text(
-                                  '즐겨찾기',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w300,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            // 즐겨찾기-재생기록 사이 구분선
-                            Container(
-                              width: 1,
-                              height: 30,
-                              color: Color(0xFFBDBDBD),
-                            ),
-                            // 재생 기록
-                            Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Image.asset(
-                                  'assets/a_image/pl_history_icon.png',
-                                  width: 18,
-                                  height: 18,
-                                ),
-                                const SizedBox(height: 3),
-                                const Text(
-                                  '재생 기록',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w300,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      height: 100,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        itemCount: 5, // 임시
+                        separatorBuilder: (_, __) => const SizedBox(width: 16),
+                        itemBuilder: (context, idx) {
+                          return _buildKeywordNewsCard();
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                  ],
+                ),
+              ),
+            ),
+            // 재생바
+            _buildPlayerBar(),
+          ],
+        ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFF0565FF),
+        unselectedItemColor: Colors.grey,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Padding(
+              padding: EdgeInsets.only(bottom: 8.0),
+              child: Icon(Icons.home, size: 32),
+            ),
+            label: '홈',
+          ),
+          BottomNavigationBarItem(
+            icon: Padding(
+              padding: EdgeInsets.only(bottom: 8.0),
+              child: Icon(Icons.star_border, size: 32),
+            ),
+            label: '즐겨찾기',
+          ),
+          BottomNavigationBarItem(
+            icon: Padding(
+              padding: EdgeInsets.only(bottom: 8.0),
+              child: Icon(Icons.history, size: 32),
+            ),
+            label: '재생기록',
+          ),
+          BottomNavigationBarItem(
+            icon: Padding(
+              padding: EdgeInsets.only(bottom: 8.0),
+              child: Icon(Icons.settings, size: 32),
+            ),
+            label: '설정',
+          ),
+        ],
+        iconSize: 32,
+        selectedFontSize: 15,
+        unselectedFontSize: 13,
+        // BottomNavigationBar 높이 늘리기
+        // Flutter 기본 BottomNavigationBar는 height 조정이 직접 안 되므로, 아이콘/텍스트 크기와 패딩으로 높임
+      ),
+    );
+  }
+
+  // Apple Podcast 스타일 실시간 속보 카드
+  Widget _buildPodcastStyleCard() {
+    return Container(
+      width: 200,
+      height: 220,
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Stack(
+        children: [
+          // 앨범/썸네일 이미지 (임시 아이콘)
+          Positioned(
+            top: 20,
+            left: 20,
+            right: 20,
+            child: Container(
+              width: 160,
+              height: 110,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(Icons.podcasts,
+                  size: 60, color: Color(0xFF7B6F5B)),
+            ),
+          ),
+          // 날짜
+          Positioned(
+            top: 140,
+            left: 20,
+            child: Text(
+              '2024. 09. 19.',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.85),
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+          // 제목(굵게)
+          const Positioned(
+            top: 160,
+            left: 20,
+            right: 20,
+            child: Text(
+              '케이팝 데몬 헌터스 OST, 빌보드 차트...',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          // 부제목(파란색, 연합뉴스)
+          const Positioned(
+            top: 182,
+            left: 20,
+            right: 20,
+            child: Text(
+              '연합뉴스',
+              style: TextStyle(
+                color: Color(0xFF0565FF),
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          // 재생 버튼 + 시간
+          Positioned(
+            bottom: 16,
+            left: 20,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 22.0), // 연합뉴스와 흰색 네모 간격 더 넓힘
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(19),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.play_arrow, size: 16, color: Colors.black),
+                    SizedBox(width: 3),
+                    Text(
+                      '60분',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+          // 옵션 ...
+          const Positioned(
+            bottom: 16,
+            right: 20,
+            child: Icon(Icons.more_horiz, color: Colors.white70),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTodayNewsCard(
+      {required String category, required String iconPath}) {
+    return Container(
+      width: 100,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.18),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset(iconPath, width: 40, height: 40, fit: BoxFit.contain),
+          const SizedBox(height: 18),
+          Text(
+            category,
+            style: const TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKeywordNewsCard() {
+    // 키워드별 뉴스 카드(디자인만, 실제 데이터/동작은 추후)
+    return Container(
+      width: 90,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.18),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '#키워드',
+            style: TextStyle(
+              color: Color(0xFF0565FF),
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlayerBar() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0565FF).withOpacity(0.13),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Center(
+              child: Text(
+                '뉴스\n사진',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.black54,
+                  fontFamily: 'Pretendard',
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _isPlaying ? _playingTitle : '재생 중이 아님',
+              style: const TextStyle(
+                fontFamily: 'Pretendard',
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            icon: Icon(
+              _isPlaying ? Icons.pause : Icons.play_arrow,
+              size: _isPlaying ? 28 : 32,
+              color: Colors.black,
+            ),
+            onPressed: () {
+              setState(() {
+                _isPlaying = !_isPlaying;
+                _playingTitle = _isPlaying ? '재생 중인 뉴스기사 제목' : '';
+              });
+            },
+          ),
+        ],
       ),
     );
   }

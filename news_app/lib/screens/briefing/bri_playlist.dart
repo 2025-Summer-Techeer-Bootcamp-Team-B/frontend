@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'briefing_screen.dart';
+import 'package:marquee/marquee.dart';
 
 const kBlue = Color(0xFF0565FF);
 const kPretendard = 'Pretendard';
@@ -13,6 +15,7 @@ class BriPlaylistScreen extends StatefulWidget {
 class _BriPlaylistScreenState extends State<BriPlaylistScreen> {
   int selectedCategory = 0;
   bool isPlaying = true;
+  int _selectedIndex = 0; // 하단 네비게이션 상태
 
   final List<String> categories = ['정치', '문화', 'IT·과학', '스포츠', '재난·기후·환경'];
   final List<List<Map<String, String>>> initialArticlesByCategory = [
@@ -96,25 +99,47 @@ class _BriPlaylistScreenState extends State<BriPlaylistScreen> {
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.arrow_back_ios_new,
-                        color: kBlue, size: 28),
-                    const SizedBox(width: 8),
-                    Image.asset(
-                      'assets/a_image/pl_toadynews_icon.png',
-                      width: 50,
-                      height: 50,
+                    // 1. 첫 줄: 뒤로가기 버튼만
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            // TODO: 홈스크린으로 이동
+                            // Navigator.of(context).pushAndRemoveUntil(
+                            //   MaterialPageRoute(builder: (context) => HomeScreen()),
+                            //   (route) => false,
+                            // );
+                            Navigator.of(context).pop();
+                          },
+                          child: const Icon(Icons.arrow_back_ios_new,
+                              color: kBlue, size: 28),
+                        ),
+                        const Spacer(),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      '오늘의 뉴스',
-                      style: TextStyle(
-                        fontFamily: kPretendard,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 29,
-                        color: kBlue,
-                      ),
+                    const SizedBox(height: 8),
+                    // 2. 둘째 줄: 오늘의 뉴스 아이콘 + 텍스트
+                    Row(
+                      children: [
+                        Image.asset(
+                          'assets/a_image/pl_toadynews_icon.png',
+                          width: 50,
+                          height: 50,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          '오늘의 뉴스',
+                          style: TextStyle(
+                            fontFamily: kPretendard,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 29,
+                            color: kBlue,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -122,25 +147,51 @@ class _BriPlaylistScreenState extends State<BriPlaylistScreen> {
               const SizedBox(height: 14), // 카테고리 버튼 위 간격
               // 카테고리 탭
               SizedBox(
-                height: 50,
+                height: 32,
                 child: ListView.separated(
+                  clipBehavior: Clip.none, // 스크롤할 때 그림자가 잘리지 않게
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   itemCount: categories.length,
                   separatorBuilder: (_, __) => const SizedBox(width: 14),
                   itemBuilder: (context, idx) {
+                    final selected = selectedCategory == idx;
                     return GestureDetector(
                       onTap: () => setState(() => selectedCategory = idx),
-                      child: _CategoryButton(
-                        label: categories[idx],
-                        selected: selectedCategory == idx,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 120),
+                        curve: Curves.easeOut,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: selected ? kBlue : Colors.white,
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: selected
+                                  ? kBlue.withOpacity(0.18)
+                                  : Colors.black12,
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          categories[idx],
+                          style: TextStyle(
+                            fontFamily: kPretendard,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: selected ? Colors.white : Colors.black54,
+                          ),
+                        ),
                       ),
                     );
                   },
                 ),
               ),
-              const SizedBox(height: 12), // 카테고리 버튼 아래 간격
-              // 카테고리 아래 검은 구분선
+              const SizedBox(height: 20), // 카테고리 버튼 아래 간격을 늘려서 그림자가 보이게
+              // 구분선
               Divider(
                 height: 1,
                 thickness: 1,
@@ -150,76 +201,98 @@ class _BriPlaylistScreenState extends State<BriPlaylistScreen> {
               Expanded(
                 child: ReorderableListView.builder(
                   key: ValueKey(selectedCategory),
-                  buildDefaultDragHandles: false,
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   itemCount: articles.length,
+                  buildDefaultDragHandles: false,
                   onReorder: (oldIndex, newIndex) {
                     setState(() {
                       if (newIndex > oldIndex) newIndex--;
-                      final moved = articles.removeAt(oldIndex);
-                      articles.insert(newIndex, moved);
+                      final item = articles.removeAt(oldIndex);
+                      articles.insert(newIndex, item);
                     });
                   },
                   itemBuilder: (context, idx) {
                     final article = articles[idx];
-                    return Dismissible(
-                      key: ValueKey(article['title']! +
-                          article['reporter']! +
-                          idx.toString()),
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        color: Colors.redAccent,
-                        child: const Icon(Icons.delete,
-                            color: Colors.white, size: 28),
-                      ),
-                      onDismissed: (_) {
-                        setState(() {
-                          articles.removeAt(idx);
-                        });
-                      },
-                      child: ListTile(
-                        key: ValueKey(
-                            'tile_${article['title']}_${article['reporter']}_$idx'),
-                        leading: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(8),
+                    return Column(
+                      key: ValueKey(
+                          'tile_${article['title']}_${article['reporter']}_$idx'),
+                      children: [
+                        Dismissible(
+                          key: ValueKey(
+                              'dismiss_${article['title']}_${article['reporter']}_$idx'),
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            color: Colors.redAccent,
+                            child: const Icon(Icons.delete,
+                                color: Colors.white, size: 28),
                           ),
-                          child: const Center(
-                            child: Text(
-                              '뉴스\n사진',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
+                          onDismissed: (direction) {
+                            setState(() {
+                              articles.removeAt(idx);
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('삭제됨')),
+                            );
+                          },
+                          child: ListTile(
+                            leading: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  '뉴스\n사진',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.black54,
+                                      fontFamily: kPretendard),
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              article['title']!,
+                              style: const TextStyle(
+                                fontFamily: kPretendard,
+                                fontWeight: FontWeight.w400,
+                                fontSize: 15,
+                              ),
+                            ),
+                            subtitle: Text(
+                              article['reporter']!,
+                              style: const TextStyle(
                                   fontSize: 12,
-                                  color: Colors.black54,
+                                  color: kBlue,
                                   fontFamily: kPretendard),
                             ),
+                            trailing: ReorderableDragStartListener(
+                              index: idx,
+                              child: _buildDragHandle(),
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const BriefingScreen(),
+                                ),
+                              );
+                            },
                           ),
                         ),
-                        title: Text(
-                          article['title']!,
-                          style: const TextStyle(
-                            fontFamily: kPretendard,
-                            fontWeight: FontWeight.w400,
-                            fontSize: 15,
+                        if (idx < articles.length - 1)
+                          Divider(
+                            height: 1,
+                            thickness: 0.5,
+                            color: Colors.grey[300],
+                            indent: 16,
+                            endIndent: 16,
                           ),
-                        ),
-                        subtitle: Text(
-                          article['reporter']!,
-                          style: const TextStyle(
-                              fontSize: 12,
-                              color: kBlue,
-                              fontFamily: kPretendard),
-                        ),
-                        trailing: ReorderableDragStartListener(
-                          index: idx,
-                          child: const Icon(Icons.menu, color: Colors.black54),
-                        ),
-                      ),
+                      ],
                     );
                   },
                 ),
@@ -282,35 +355,74 @@ class _BriPlaylistScreenState extends State<BriPlaylistScreen> {
                   ],
                 ),
               ),
-              // 하단 네비게이션
-              Container(
-                height: 72,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFFF5F6F8), Color(0xFFE9EBF0)],
-                  ),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _NavItem(
-                      iconPath: 'assets/a_image/pl_setting_icon.png',
-                      label: '설정',
-                    ),
-                    _NavItem(
-                      iconPath: 'assets/a_image/pl_star_icon.png',
-                      label: '즐겨찾기',
-                    ),
-                    _NavItem(
-                      iconPath: 'assets/a_image/pl_history_icon.png',
-                      label: '재생 기록',
-                    ),
-                  ],
-                ),
-              ),
             ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: kBlue,
+        unselectedItemColor: Colors.grey,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+            // TODO: 각 탭별 화면 이동 구현 예정
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Padding(
+              padding: EdgeInsets.only(bottom: 8.0),
+              child: Icon(Icons.home, size: 32),
+            ),
+            label: '홈',
+          ),
+          BottomNavigationBarItem(
+            icon: Padding(
+              padding: EdgeInsets.only(bottom: 8.0),
+              child: Icon(Icons.star_border, size: 32),
+            ),
+            label: '즐겨찾기',
+          ),
+          BottomNavigationBarItem(
+            icon: Padding(
+              padding: EdgeInsets.only(bottom: 8.0),
+              child: Icon(Icons.history, size: 32),
+            ),
+            label: '재생기록',
+          ),
+          BottomNavigationBarItem(
+            icon: Padding(
+              padding: EdgeInsets.only(bottom: 8.0),
+              child: Icon(Icons.settings, size: 32),
+            ),
+            label: '설정',
+          ),
+        ],
+        iconSize: 32,
+        selectedFontSize: 15,
+        unselectedFontSize: 13,
+      ),
+    );
+  }
+
+  Widget _buildDragHandle() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(
+        3,
+        (i) => Container(
+          width: 22,
+          height: 3,
+          margin: const EdgeInsets.symmetric(vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.grey[700],
+            borderRadius: BorderRadius.circular(2),
           ),
         ),
       ),
