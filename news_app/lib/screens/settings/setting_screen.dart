@@ -1,4 +1,12 @@
 import 'package:flutter/material.dart';
+import 'contents_setting/category_edit.dart';
+import 'contents_setting/keyword_edit.dart';
+import 'contents_setting/media_edit.dart';
+import 'display_setting/font_size.dart';
+import '../home/home_screen.dart';
+import '../favorites/fav_s_t_off.dart';
+import '../history/history_list_screen.dart';
+import '../briefing/bri_playlist.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -23,6 +31,7 @@ class _SettingScreenState extends State<SettingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final prevScreen = ModalRoute.of(context)?.settings.arguments as String?;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -41,27 +50,40 @@ class _SettingScreenState extends State<SettingScreen> {
                     // 뒤로가기 버튼
                     GestureDetector(
                       onTap: () {
-                        Navigator.of(context).pop();
+                        if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        } else if (prevScreen == 'home') {
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                                builder: (context) => const CustomHomeScreen()),
+                          );
+                        } else if (prevScreen == 'briefing') {
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const BriPlaylistScreen()),
+                          );
+                        } else {
+                          Navigator.of(context).pop();
+                        }
                       },
-                      child: const SizedBox(
-                        width: 50,
-                        height: 50,
-                        child: Icon(
-                          Icons.chevron_left,
-                          size: 35,
-                          color: Color(0xFF0565FF),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    // 홈 텍스트
-                    const Text(
-                      '홈',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Pretendard',
-                        color: Color(0xFF0565FF),
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            size: 28,
+                            color: Color(0xFF0565FF),
+                          ),
+                          SizedBox(width: 2),
+                          Text(
+                            '뒤로',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF0565FF),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -312,7 +334,29 @@ class _SettingScreenState extends State<SettingScreen> {
     return GestureDetector(
       onTap: () {
         // 하위 아이템 클릭 시 처리
-        print('선택된 항목: $title');
+        if (title == '관심 카테고리 수정') {
+          // 연동 비워둠
+        } else if (title == '관심 키워드 수정') {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const KeywordEditPage(),
+            ),
+          );
+        } else if (title == '관심 언론사 수정') {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const MediaEditPage(),
+            ),
+          );
+        } else if (title == '글자 크기 조정') {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const FontSizeSettingScreen(),
+            ),
+          );
+        } else {
+          print('선택된 항목: $title');
+        }
       },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 46),

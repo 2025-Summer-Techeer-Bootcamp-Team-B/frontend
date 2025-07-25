@@ -38,41 +38,37 @@ class _FontSizeSettingScreenState extends State<FontSizeSettingScreen> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                      color: Color(0xFF1976D2)),
+                      color: Color(0xFF0565FF), size: 28),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 2),
                 const Text(
                   '뒤로',
                   style: TextStyle(
-                    color: Color(0xFF1976D2),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF0565FF),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 20,
                   ),
                 ),
-                const Expanded(
-                  child: Center(
-                    child: Text(
-                      '글자 크기 변경',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                const Spacer(),
+                const Text(
+                  '글자 크기 변경',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
                   ),
                 ),
+                const Spacer(),
                 TextButton(
                   onPressed: () {
-                    // 완료 시 저장 로직 필요
                     Navigator.of(context).pop(_fontSize);
                   },
                   child: const Text(
                     '완료',
                     style: TextStyle(
-                      color: Color(0xFF1976D2),
-                      fontSize: 16,
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0565FF),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 20,
                     ),
                   ),
                 ),

@@ -6,6 +6,11 @@ import 'screens/briefing/bri_playlist.dart';
 import 'screens/briefing/briefing_screen.dart';
 import 'screens/auth/interest/keyword_select.dart';
 import 'screens/auth/interest/media_select.dart';
+import 'screens/settings/contents_setting/keyword_edit.dart';
+import 'screens/settings/contents_setting/media_edit.dart';
+import 'screens/settings/setting_screen.dart';
+import 'screens/history/history_click_screen.dart';
+import 'screens/history/history_list_screen.dart';
 // import 'screens/home/dfs.dart';
 // import 'screens/favorites/favorites_screen_toggle_off.dart';
 

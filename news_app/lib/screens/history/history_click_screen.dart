@@ -86,7 +86,9 @@ class _HistoryClickScreenState extends State<HistoryClickScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     TextButton.icon(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
                       icon: const Icon(Icons.chevron_left,
                           color: Color(0xFF0565FF), size: 24),
                       label: const Text('뒤로',
@@ -112,22 +114,8 @@ class _HistoryClickScreenState extends State<HistoryClickScreen> {
                         fontSize: 18,
                       ),
                     ),
-                    TextButton(
-                      onPressed: () {},
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF0565FF),
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(50, 30),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: const Text('완료',
-                          style: TextStyle(
-                            color: Color(0xFF0565FF),
-                            fontFamily: 'Pretendard',
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          )),
-                    ),
+                    // 완료 버튼 제거
+                    const SizedBox(width: 50),
                   ],
                 ),
               ),

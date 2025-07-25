@@ -1,12 +1,17 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
+import '../home/home_screen.dart';
+import '../history/history_list_screen.dart';
+import '../settings/setting_screen.dart';
+import '../briefing/bri_playlist.dart';
 
 class FavoritesCategoryScreen extends StatelessWidget {
   const FavoritesCategoryScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final prevScreen = ModalRoute.of(context)?.settings.arguments as String?;
     // 더미 카테고리 데이터
     final List<Map<String, String>> categories = [
       {
@@ -81,12 +86,43 @@ class FavoritesCategoryScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 16),
                     color: Colors.transparent,
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(Icons.arrow_back_ios_new,
-                            color: Color(0xFF0565FF), size: 32),
-                        Text(
+                        GestureDetector(
+                          onTap: () {
+                            if (Navigator.of(context).canPop()) {
+                              Navigator.of(context).pop();
+                            } else if (prevScreen == 'home') {
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const CustomHomeScreen()),
+                              );
+                            } else if (prevScreen == 'briefing') {
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const BriPlaylistScreen()),
+                              );
+                            } else {
+                              Navigator.of(context).pop();
+                            }
+                          },
+                          child: const Row(
+                            children: [
+                              Icon(Icons.arrow_back_ios_new,
+                                  color: Color(0xFF0565FF), size: 32),
+                              SizedBox(width: 2),
+                              Text('뒤로',
+                                  style: TextStyle(
+                                      color: Color(0xFF0565FF),
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 20)),
+                            ],
+                          ),
+                        ),
+                        const Text(
                           '즐겨찾기',
                           style: TextStyle(
                             fontSize: 22,
@@ -94,7 +130,7 @@ class FavoritesCategoryScreen extends StatelessWidget {
                             color: Colors.black,
                           ),
                         ),
-                        Text('완료',
+                        const Text('완료',
                             style: TextStyle(
                               color: Color(0xFF0565FF),
                               fontSize: 16,

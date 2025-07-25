@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'briefing_screen.dart';
 import 'package:marquee/marquee.dart';
+import '../home/home_screen.dart';
+import '../favorites/fav_s_t_off.dart';
+import '../history/history_list_screen.dart';
+import '../settings/setting_screen.dart';
 
 const kBlue = Color(0xFF0565FF);
 const kPretendard = 'Pretendard';
@@ -15,7 +19,7 @@ class BriPlaylistScreen extends StatefulWidget {
 class _BriPlaylistScreenState extends State<BriPlaylistScreen> {
   int selectedCategory = 0;
   bool isPlaying = true;
-  int _selectedIndex = 0; // 하단 네비게이션 상태
+  final int _selectedIndex = 0; // 하단 네비게이션 상태
 
   final List<String> categories = ['경제', '문화', 'IT·과학', '스포츠', '재난·기후·환경'];
   final List<List<Map<String, String>>> initialArticlesByCategory = [
@@ -107,12 +111,11 @@ class _BriPlaylistScreenState extends State<BriPlaylistScreen> {
                       children: [
                         GestureDetector(
                           onTap: () {
-                            // TODO: 홈스크린으로 이동
-                            // Navigator.of(context).pushAndRemoveUntil(
-                            //   MaterialPageRoute(builder: (context) => HomeScreen()),
-                            //   (route) => false,
-                            // );
-                            Navigator.of(context).pop();
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) => const CustomHomeScreen(),
+                              ),
+                            );
                           },
                           child: const Icon(Icons.arrow_back_ios_new,
                               color: kBlue, size: 28),
@@ -368,10 +371,39 @@ class _BriPlaylistScreenState extends State<BriPlaylistScreen> {
         showUnselectedLabels: true,
         currentIndex: _selectedIndex,
         onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-            // TODO: 각 탭별 화면 이동 구현 예정
-          });
+          if (index == 0) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const CustomHomeScreen(),
+                settings: const RouteSettings(arguments: 'briefing'),
+              ),
+            );
+          } else if (index == 1) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const FavoritesCategoryScreen(),
+                settings: const RouteSettings(arguments: 'briefing'),
+              ),
+            );
+          } else if (index == 2) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const HistoryListScreen(),
+                settings: const RouteSettings(arguments: 'briefing'),
+              ),
+            );
+          } else if (index == 3) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const SettingScreen(),
+                settings: const RouteSettings(arguments: 'briefing'),
+              ),
+            );
+          }
         },
         items: const [
           BottomNavigationBarItem(

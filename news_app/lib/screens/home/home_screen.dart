@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../briefing/bri_playlist.dart';
+import '../favorites/fav_s_t_off.dart';
+import '../history/history_list_screen.dart';
+import '../settings/setting_screen.dart';
 
 class CustomHomeScreen extends StatefulWidget {
   const CustomHomeScreen({Key? key}) : super(key: key);
@@ -9,14 +12,39 @@ class CustomHomeScreen extends StatefulWidget {
 }
 
 class _CustomHomeScreenState extends State<CustomHomeScreen> {
-  int _selectedIndex = 0;
+  final int _selectedIndex = 0;
   bool _isPlaying = false;
   String _playingTitle = '';
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (index == 0) {
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (_) => const CustomHomeScreen()));
+    } else if (index == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const FavoritesCategoryScreen(),
+          settings: const RouteSettings(arguments: 'home'),
+        ),
+      );
+    } else if (index == 2) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const HistoryListScreen(),
+          settings: const RouteSettings(arguments: 'home'),
+        ),
+      );
+    } else if (index == 3) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const SettingScreen(),
+          settings: const RouteSettings(arguments: 'home'),
+        ),
+      );
+    }
   }
 
   @override
