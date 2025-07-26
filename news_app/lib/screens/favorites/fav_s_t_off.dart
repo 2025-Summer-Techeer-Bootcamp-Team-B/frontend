@@ -91,9 +91,7 @@ class FavoritesCategoryScreen extends StatelessWidget {
                       children: [
                         GestureDetector(
                           onTap: () {
-                            if (Navigator.of(context).canPop()) {
-                              Navigator.of(context).pop();
-                            } else if (prevScreen == 'home') {
+                            if (prevScreen == 'home') {
                               Navigator.of(context).pushReplacement(
                                 MaterialPageRoute(
                                     builder: (context) =>

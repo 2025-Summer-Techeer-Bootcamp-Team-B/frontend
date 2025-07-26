@@ -3,6 +3,8 @@ import '../briefing/bri_playlist.dart';
 import '../favorites/fav_s_t_off.dart';
 import '../history/history_list_screen.dart';
 import '../settings/setting_screen.dart';
+import '../briefing/keyword_news.dart';
+import '../briefing/briefing_screen.dart';
 
 class CustomHomeScreen extends StatefulWidget {
   const CustomHomeScreen({Key? key}) : super(key: key);
@@ -85,16 +87,19 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
                         children: [
                           Image.asset(
                             'assets/a_image/home_newsflash_icon.png',
-                            width: 38,
-                            height: 38,
+                            width: 32,
+                            height: 32,
                           ),
                           const SizedBox(width: 8),
-                          const Text(
-                            '실시간 속보',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
+                          const Expanded(
+                            child: Text(
+                              '실시간 속보',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -127,12 +132,15 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
                         padding: EdgeInsets.symmetric(horizontal: 20),
                         child: Row(
                           children: [
-                            Text(
-                              '오늘의 뉴스',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black,
+                            Expanded(
+                              child: Text(
+                                '오늘의 뉴스',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
@@ -175,31 +183,51 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
                     ),
                     const SizedBox(height: 18),
                     // 키워드별 뉴스 섹션
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        children: [
-                          Text(
-                            '키워드별 뉴스',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const KeywordNewsScreen(),
                             ),
-                          ),
-                        ],
+                          );
+                        },
+                        child: const Row(
+                          children: [
+                            Text(
+                              '키워드별 뉴스',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(Icons.chevron_right, color: Color(0xFF0565FF)),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 10),
                     SizedBox(
-                      height: 100,
+                      height: 240,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         itemCount: 5, // 임시
                         separatorBuilder: (_, __) => const SizedBox(width: 16),
                         itemBuilder: (context, idx) {
-                          return _buildKeywordNewsCard();
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const BriefingScreen(),
+                                ),
+                              );
+                            },
+                            child: _buildKeywordNewsCard(),
+                          );
                         },
                       ),
                     ),
@@ -393,7 +421,7 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset(iconPath, width: 40, height: 40, fit: BoxFit.contain),
+          Image.asset(iconPath, width: 32, height: 32, fit: BoxFit.contain),
           const SizedBox(height: 18),
           Text(
             category,
@@ -410,12 +438,12 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
   }
 
   Widget _buildKeywordNewsCard() {
-    // 키워드별 뉴스 카드(디자인만, 실제 데이터/동작은 추후)
     return Container(
-      width: 90,
+      width: 200,
+      height: 220,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.18),
@@ -424,16 +452,110 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
           ),
         ],
       ),
-      child: const Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Stack(
         children: [
-          Text(
-            '#키워드',
-            style: TextStyle(
-              color: Color(0xFF0565FF),
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
+          // 기사 썸네일 이미지
+          Positioned(
+            top: 20,
+            left: 20,
+            right: 20,
+            child: Container(
+              width: 140,
+              height: 90,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Image.asset(
+                  'assets/a_image/home_news1.jpg',
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
+          ),
+          // 날짜
+          Positioned(
+            top: 140,
+            left: 20,
+            child: Text(
+              '2024. 09. 19.',
+              style: TextStyle(
+                color: Colors.black.withOpacity(0.6),
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+          // 제목(굵게)
+          const Positioned(
+            top: 160,
+            left: 20,
+            right: 20,
+            child: Text(
+              '키워드 관련 뉴스 제목...',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          // 출처(파란색)
+          const Positioned(
+            top: 182,
+            left: 20,
+            right: 20,
+            child: Text(
+              '연합뉴스',
+              style: TextStyle(
+                color: Color(0xFF0565FF),
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          // 재생 버튼 + 시간
+          Positioned(
+            bottom: 16,
+            left: 20,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 22.0),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0565FF),
+                  borderRadius: BorderRadius.circular(19),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.play_arrow, size: 16, color: Colors.white),
+                    SizedBox(width: 3),
+                    Text(
+                      '60분',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // 옵션 ...
+          const Positioned(
+            bottom: 16,
+            right: 20,
+            child: Icon(Icons.more_horiz, color: Colors.grey),
           ),
         ],
       ),

@@ -72,23 +72,11 @@ class FavoritesCategoryScreen extends StatelessWidget {
                       children: [
                         GestureDetector(
                           onTap: () {
-                            if (Navigator.of(context).canPop()) {
-                              Navigator.of(context).pop();
-                            } else if (prevScreen == 'home') {
-                              Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const CustomHomeScreen()),
-                              );
-                            } else if (prevScreen == 'briefing') {
-                              Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const BriPlaylistScreen()),
-                              );
-                            } else {
-                              Navigator.of(context).pop();
-                            }
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const CustomHomeScreen()),
+                            );
                           },
                           child: const Row(
                             children: [

@@ -50,9 +50,7 @@ class _SettingScreenState extends State<SettingScreen> {
                     // 뒤로가기 버튼
                     GestureDetector(
                       onTap: () {
-                        if (Navigator.of(context).canPop()) {
-                          Navigator.of(context).pop();
-                        } else if (prevScreen == 'home') {
+                        if (prevScreen == 'home') {
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(
                                 builder: (context) => const CustomHomeScreen()),
@@ -68,17 +66,18 @@ class _SettingScreenState extends State<SettingScreen> {
                         }
                       },
                       child: const Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             Icons.arrow_back_ios_new_rounded,
-                            size: 28,
+                            size: 24,
                             color: Color(0xFF0565FF),
                           ),
                           SizedBox(width: 2),
                           Text(
                             '뒤로',
                             style: TextStyle(
-                              fontSize: 20,
+                              fontSize: 18,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF0565FF),
                             ),

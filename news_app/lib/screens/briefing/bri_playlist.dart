@@ -129,17 +129,20 @@ class _BriPlaylistScreenState extends State<BriPlaylistScreen> {
                       children: [
                         Image.asset(
                           'assets/a_image/pl_toadynews_icon.png',
-                          width: 50,
-                          height: 50,
+                          width: 40,
+                          height: 40,
                         ),
                         const SizedBox(width: 8),
-                        const Text(
-                          '오늘의 뉴스',
-                          style: TextStyle(
-                            fontFamily: kPretendard,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 29,
-                            color: kBlue,
+                        const Expanded(
+                          child: Text(
+                            '오늘의 뉴스',
+                            style: TextStyle(
+                              fontFamily: kPretendard,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 24,
+                              color: kBlue,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
