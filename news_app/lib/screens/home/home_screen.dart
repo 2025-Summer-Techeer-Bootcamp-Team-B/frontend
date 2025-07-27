@@ -5,6 +5,8 @@ import '../history/history_list_screen.dart';
 import '../settings/setting_screen.dart';
 import '../briefing/keyword_news.dart';
 import '../briefing/briefing_screen.dart';
+import '../../services/news_service.dart';
+import '../../models/article_models.dart';
 
 class CustomHomeScreen extends StatefulWidget {
   const CustomHomeScreen({Key? key}) : super(key: key);
@@ -17,6 +19,55 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
   final int _selectedIndex = 0;
   bool _isPlaying = false;
   String _playingTitle = '';
+
+  // API 서비스 인스턴스
+  final NewsService _newsService = NewsService();
+
+  // 뉴스 데이터 상태
+  List<ArticleModel> _breakingNews = [];
+  List<ArticleModel> _keywordNews = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNewsData();
+  }
+
+  // 뉴스 데이터 로드
+  Future<void> _loadNewsData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 각각 await로 받아서 타입 에러 방지
+      final breakingNews = await _newsService.getBreakingNews();
+      final keywordNewsResponse = await _newsService.getKeywordNews(keyword: '인기');
+      final keywordNews = keywordNewsResponse.articles;
+
+      setState(() {
+        _breakingNews = breakingNews;
+        _keywordNews = keywordNews;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('뉴스 데이터 로드 에러: $e');
+      setState(() {
+        _isLoading = false;
+      });
+
+      // 에러 발생 시 사용자에게 알림
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('뉴스를 불러오는데 실패했습니다: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   void _onItemTapped(int index) {
     if (index == 0) {

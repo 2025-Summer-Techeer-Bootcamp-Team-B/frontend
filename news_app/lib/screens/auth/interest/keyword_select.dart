@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import '../../../services/api_service.dart';
 // import '../../home/home_screen.dart';
 
 class KeywordSelectPage extends StatefulWidget {
-  const KeywordSelectPage({super.key});
+  final List<String> selectedMedia;
+  final List<String> selectedCategories;
+  
+  const KeywordSelectPage({
+    super.key,
+    required this.selectedMedia,
+    required this.selectedCategories,
+  });
 
   @override
   State<KeywordSelectPage> createState() => _KeywordSelectPageState();
@@ -238,14 +246,54 @@ class _KeywordSelectPageState extends State<KeywordSelectPage> {
                 margin: const EdgeInsets.only(bottom: 24),
                 child: ElevatedButton(
                   onPressed: keywords.isNotEmpty
-                      ? () {
-                          // 완료 처리 - 홈 화면으로 이동 (예시)
-                          // Navigator.of(context).pushAndRemoveUntil(
-                          //   MaterialPageRoute(
-                          //     builder: (context) => const HomeScreen(),
-                          //   ),
-                          //   (route) => false, // 모든 이전 화면 제거
-                          // );
+                      ? () async {
+                          try {
+                            // 선택된 정보들을 콘솔에 출력 (디버깅용)
+                            print('선택된 언론사: ${widget.selectedMedia}');
+                            print('선택된 카테고리: ${widget.selectedCategories}');
+                            print('선택된 키워드: $keywords');
+                            
+                            // API 서비스 인스턴스 가져오기
+                            final apiService = ApiService();
+                            
+                            // 선택된 카테고리 정보를 API로 업데이트 (PUT 메서드 사용)
+                            final updatedCategories = await apiService.updateUserCategories(widget.selectedCategories);
+                            print('업데이트된 카테고리: ${updatedCategories.categories}');
+                            
+                            // 선택된 언론사 정보를 API로 업데이트 (PUT 메서드 사용)
+                            final updatedPress = await apiService.updateUserPress(widget.selectedMedia);
+                            print('업데이트된 언론사: ${updatedPress.pressList}');
+                            
+                            // TODO: 선택된 키워드도 저장하는 API 호출 추가
+                            
+                            // 성공 메시지 표시
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('관심 정보가 성공적으로 저장되었습니다.'),
+                                  backgroundColor: Color(0xFF0565FF),
+                                ),
+                              );
+                            }
+                            
+                            // 완료 처리 - 홈 화면으로 이동 (예시)
+                            // Navigator.of(context).pushAndRemoveUntil(
+                            //   MaterialPageRoute(
+                            //     builder: (context) => const HomeScreen(),
+                            //   ),
+                            //   (route) => false, // 모든 이전 화면 제거
+                            // );
+                          } catch (e) {
+                            print('카테고리 저장 실패: $e');
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('저장 중 오류가 발생했습니다: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
                         }
                       : null,
                   style: ElevatedButton.styleFrom(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'start_screen.dart';
+import '../../services/auth_service.dart';
+import '../../models/auth_models.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,8 +18,10 @@ class _LoginScreenState extends State<LoginScreen> {
   bool emailFocused = false;
   bool passwordFocused = false;
   bool isPasswordVisible = false;
+  bool isLoading = false;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
 
   void handleKeyPress(String key) {
     setState(() {
@@ -107,9 +111,46 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void handleLogin() {
-    // 로그인 기능
-    print('로그인: $email, $password');
+  Future<void> handleLogin() async {
+    if (!canLogin || isLoading) return;
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // API 호출
+      final authResponse = await _authService.login(email.trim(), password);
+
+      print('로그인 성공: ${authResponse.email}');
+      print('토큰: ${authResponse.accessToken}');
+
+      // 로그인 성공 시 다음 화면으로 이동
+      // TODO: 실제 화면으로 변경
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const StartScreen()),
+      );
+    } catch (e) {
+      // 에러 처리
+      print('로그인 실패: $e');
+
+      // 에러 메시지 표시
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('로그인에 실패했습니다: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
   }
 
   void handleSignup() {
@@ -324,16 +365,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           child: GestureDetector(
-                            onTap: canLogin ? handleLogin : null,
+                            onTap:
+                                (canLogin && !isLoading) ? handleLogin : null,
                             child: Container(
                               width: double.infinity,
                               height: 56,
                               decoration: BoxDecoration(
-                                color: canLogin
+                                color: (canLogin && !isLoading)
                                     ? const Color(0xFF0565FF)
                                     : const Color(0xFF0565FF).withOpacity(0.5),
                                 borderRadius: BorderRadius.circular(28),
-                                boxShadow: canLogin
+                                boxShadow: (canLogin && !isLoading)
                                     ? [
                                         BoxShadow(
                                           color: const Color(0xFF0565FF)
@@ -344,16 +386,25 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ]
                                     : null,
                               ),
-                              child: const Center(
-                                child: Text(
-                                  '로그인',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'Pretendard',
-                                  ),
-                                ),
+                              child: Center(
+                                child: isLoading
+                                    ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Text(
+                                        '로그인',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Pretendard',
+                                        ),
+                                      ),
                               ),
                             ),
                           ),
