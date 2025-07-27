@@ -291,3 +291,43 @@ class UserCategories {
     return 'UserCategories(category: $category)';
   }
 }
+
+// 사용자 관심 언론사 모델
+class UserPress {
+  final List<String>? press;      // 관심 언론사
+
+  UserPress({
+    this.press,
+  });
+
+  factory UserPress.fromJson(Map<String, dynamic> json) {
+    return UserPress(
+      press: json['press'] != null 
+          ? List<String>.from(json['press'])
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'press': press,
+    };
+  }
+
+  // 편의 메서드
+  List<String> get pressList => press ?? [];
+
+  // 복사 메서드
+  UserPress copyWith({
+    List<String>? press,
+  }) {
+    return UserPress(
+      press: press ?? this.press,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'UserPress(press: $press)';
+  }
+}

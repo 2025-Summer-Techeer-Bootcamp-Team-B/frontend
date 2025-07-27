@@ -19,6 +19,8 @@ import 'providers/user_voice_type_provider.dart';
 import 'widgets/user_preferences_example.dart';
 import 'widgets/user_keyword_example.dart';
 import 'screens/auth/interest/voice_select.dart';
+import 'screens/test_api_screen.dart';
+import 'screens/auth/login_screen.dart';
 // import 'screens/home/dfs.dart';
 // import 'screens/favorites/favorites_screen_toggle_off.dart';
 
@@ -47,7 +49,7 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.blue,
           fontFamily: 'Pretendard',
         ),
-        home: const UserPreferencesExample(), // 설정 화면으로 시작 (TTS 변경 테스트)
+        home: const LoginScreen(), // 로그인 화면으로 시작
       ),
     );
   }

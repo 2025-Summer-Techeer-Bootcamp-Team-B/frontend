@@ -13,7 +13,7 @@ class ApiService {
   String? _refreshToken; // 리프레시 토큰 추가
 
   // TODO: 백엔드 배포 후 실제 URL로 변경
-  static const String baseUrl = 'http://localhost:8000'; // 개발 환경용
+  static const String baseUrl = 'http://34.47.70.30'; // 실제 백엔드 서버
 
   void initialize() async {
     // 저장된 토큰들 불러오기
@@ -222,30 +222,6 @@ class ApiService {
     }
   }
 
-  // 사용자 TTS 음성 타입 업데이트 (PUT)
-  Future<UserPreferences> updateUserVoiceType(String voiceType) async {
-    try {
-      final requestData = {
-        'voice_type': voiceType,
-      };
-      
-      final response = await put(ApiEndpoints.userVoiceType, data: requestData);
-      return UserPreferences.fromJson(response.data);
-    } catch (e) {
-      throw _handleError(e);
-    }
-  }
-
-  // 사용자 관심 키워드 조회
-  Future<UserKeyword> getUserKeywords() async {
-    try {
-      final response = await get(ApiEndpoints.userKeyword);
-      return UserKeyword.fromJson(response.data);
-    } catch (e) {
-      throw _handleError(e);
-    }
-  }
-
   // 사용자 관심 카테고리 조회
   Future<UserCategories> getUserCategories() async {
     try {
@@ -279,6 +255,30 @@ class ApiService {
       
       final response = await put(ApiEndpoints.userCategory, data: requestData);
       return UserCategories.fromJson(response.data);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // 사용자 관심 언론사 조회
+  Future<UserPress> getUserPress() async {
+    try {
+      final response = await get(ApiEndpoints.userPress);
+      return UserPress.fromJson(response.data);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // 사용자 관심 언론사 업데이트 (PUT - 기존 데이터 수정)
+  Future<UserPress> updateUserPress(List<String> press) async {
+    try {
+      final requestData = {
+        'press': press,
+      };
+      
+      final response = await put(ApiEndpoints.userPress, data: requestData);
+      return UserPress.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
     }

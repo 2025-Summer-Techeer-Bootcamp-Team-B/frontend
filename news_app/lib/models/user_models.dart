@@ -1,4 +1,5 @@
 // 사용자 관련 모델들
+import 'common_models.dart';
 class UserModel {
   final int id;
   final String email;
@@ -55,51 +56,7 @@ class UserModel {
   }
 }
 
-class UserPreferences {
-  final String? preferredVoice;
-  final int? fontSize;
-  final bool? autoPlay;
-  final List<String>? favoriteCategories;
-  final List<String>? favoriteKeywords;
-  final List<String>? favoriteMedia; // 관심 언론사 추가
-
-  UserPreferences({
-    this.preferredVoice,
-    this.fontSize,
-    this.autoPlay,
-    this.favoriteCategories,
-    this.favoriteKeywords,
-    this.favoriteMedia,
-  });
-
-  factory UserPreferences.fromJson(Map<String, dynamic> json) {
-    return UserPreferences(
-      preferredVoice: json['preferredVoice'],
-      fontSize: json['fontSize'],
-      autoPlay: json['autoPlay'],
-      favoriteCategories: json['favoriteCategories'] != null
-          ? List<String>.from(json['favoriteCategories'])
-          : null,
-      favoriteKeywords: json['favoriteKeywords'] != null
-          ? List<String>.from(json['favoriteKeywords'])
-          : null,
-      favoriteMedia: json['favoriteMedia'] != null
-          ? List<String>.from(json['favoriteMedia'])
-          : null,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'preferredVoice': preferredVoice,
-      'fontSize': fontSize,
-      'autoPlay': autoPlay,
-      'favoriteCategories': favoriteCategories,
-      'favoriteKeywords': favoriteKeywords,
-      'favoriteMedia': favoriteMedia,
-    };
-  }
-}
+// UserPreferences는 common_models.dart에서 정의됨
 
 class UpdateUserRequest {
   final String? nickname;

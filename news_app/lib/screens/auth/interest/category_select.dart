@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'keyword_select.dart';
 import 'media_select.dart';
-import '../../models/category_model.dart';
-import '../../services/api_service.dart';
+import '../../../models/category_model.dart';
+import '../../../services/api_service.dart';
 
 class CategorySelectPage extends StatefulWidget {
   final List<String> selectedMedia;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../services/api_service.dart';
+import '../../../services/api_service.dart';
 // import '../../home/home_screen.dart';
 
 class KeywordSelectPage extends StatefulWidget {
@@ -260,8 +260,11 @@ class _KeywordSelectPageState extends State<KeywordSelectPage> {
                             final updatedCategories = await apiService.updateUserCategories(widget.selectedCategories);
                             print('업데이트된 카테고리: ${updatedCategories.categories}');
                             
+                            // 선택된 언론사 정보를 API로 업데이트 (PUT 메서드 사용)
+                            final updatedPress = await apiService.updateUserPress(widget.selectedMedia);
+                            print('업데이트된 언론사: ${updatedPress.pressList}');
+                            
                             // TODO: 선택된 키워드도 저장하는 API 호출 추가
-                            // TODO: 선택된 언론사도 저장하는 API 호출 추가
                             
                             // 성공 메시지 표시
                             if (context.mounted) {

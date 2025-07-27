@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'category_select.dart';
-import '../../models/category_model.dart';
+import '../../../models/category_model.dart';
+import '../../../services/api_service.dart';
 
 class MediaSelectPage extends StatefulWidget {
   const MediaSelectPage({super.key});
@@ -18,6 +19,86 @@ class _MediaSelectPageState extends State<MediaSelectPage> {
 
   int? selectedIndex;
   final Set<int> selected = {};
+  bool isUpdating = false; // 언론사 업데이트 중 상태
+
+  @override
+  void initState() {
+    super.initState();
+    // 기존에 저장된 언론사 정보가 있다면 불러와서 선택 상태로 설정
+    _loadSavedPress();
+  }
+
+  // 저장된 언론사 정보 불러오기
+  Future<void> _loadSavedPress() async {
+    try {
+      final apiService = ApiService();
+      final savedPress = await apiService.getUserPress();
+      
+      // 저장된 언론사와 현재 언론사 목록을 비교하여 선택 상태 설정
+      setState(() {
+        for (int i = 0; i < mediaList.length; i++) {
+          if (savedPress.pressList.contains(mediaList[i]['name'])) {
+            selected.add(i);
+          }
+        }
+      });
+    } catch (e) {
+      print('저장된 언론사 불러오기 실패: $e');
+      // 오류가 발생해도 계속 진행
+    }
+  }
+
+  // 언론사 선택 변경 시 API로 업데이트
+  Future<void> _updatePress() async {
+    // 최소 1개 이상 선택되었을 때만 API 호출
+    List<String> selectedPress = selected
+        .map((index) => mediaList[index]['name']!)
+        .toList();
+    
+    if (selectedPress.isEmpty) return;
+    
+    print('언론사 업데이트 시작: $selectedPress');
+    
+    setState(() {
+      isUpdating = true;
+    });
+    
+    try {
+      final apiService = ApiService();
+      print('API 서비스 호출 중...');
+      final updatedPress = await apiService.updateUserPress(selectedPress);
+      print('언론사 업데이트 성공: ${updatedPress.pressList}');
+      
+      // 성공 메시지 표시
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('언론사가 업데이트되었습니다.'),
+            backgroundColor: Color(0xFF0565FF),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      print('언론사 업데이트 실패: $e');
+      // 오류 메시지 표시
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('언론사 업데이트 실패: $e'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isUpdating = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -104,15 +185,18 @@ class _MediaSelectPageState extends State<MediaSelectPage> {
                   final media = mediaList[index];
                   final isSelected = selected.contains(index);
                   return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        if (isSelected) {
-                          selected.remove(index);
-                        } else {
-                          selected.add(index);
-                        }
-                      });
-                    },
+                                      onTap: () async {
+                    setState(() {
+                      if (isSelected) {
+                        selected.remove(index);
+                      } else {
+                        selected.add(index);
+                      }
+                    });
+                    
+                    // 언론사 선택이 변경될 때마다 API로 업데이트
+                    await _updatePress();
+                  },
                     child: Column(
                       children: [
                         Stack(
@@ -167,9 +251,39 @@ class _MediaSelectPageState extends State<MediaSelectPage> {
                 },
               ),
             ),
+            // 업데이트 상태 표시
+            if (isUpdating)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0565FF)),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '언론사 업데이트 중...',
+                        style: TextStyle(
+                          color: const Color(0xFF0565FF),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Pretendard',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             // 하단 버튼(화살표+파란동그라미) 화면 중앙에 가깝게
             Padding(
-              padding: const EdgeInsets.only(bottom: 264.0),
+              padding: EdgeInsets.only(bottom: isUpdating ? 200.0 : 264.0),
               child: Center(
                 child: SizedBox(
                   width: 120,
