@@ -1,30 +1,203 @@
 import 'package:flutter/material.dart';
 import 'keyword_select.dart';
 import 'media_select.dart';
+import '../../models/category_model.dart';
+import '../../services/api_service.dart';
 
 class CategorySelectPage extends StatefulWidget {
-  const CategorySelectPage({super.key});
+  final List<String> selectedMedia;
+  
+  const CategorySelectPage({
+    super.key,
+    required this.selectedMedia,
+  });
 
   @override
   State<CategorySelectPage> createState() => _CategorySelectPageState();
 }
 
 class _CategorySelectPageState extends State<CategorySelectPage> {
-  final List<Map<String, String>> categories = [
-    {'name': '정치', 'image': 'assets/a_image/politics_icon.webp'},
-    {'name': '경제', 'image': 'assets/a_image/economy.png'},
-    {'name': '사회', 'image': 'assets/a_image/society_icon.webp'},
-    {'name': '문화', 'image': 'assets/a_image/culture_icon.webp'},
-    {'name': 'IT·과학', 'image': 'assets/a_image/IT_icon.webp'},
-    {'name': '국제', 'image': 'assets/a_image/global_icon.png'},
-    {'name': '재난·기후·환경', 'image': 'assets/a_image/environment_icon.webp'},
-    {'name': '생활·건강', 'image': 'assets/a_image/health_icon.webp'},
-    {'name': '스포츠', 'image': 'assets/a_image/sport_icon.png'},
-    {'name': '연예', 'image': 'assets/a_image/entertainment.webp'},
-    {'name': '날씨', 'image': 'assets/a_image/ weather_icon.png'},
-    {'name': '이슈', 'image': 'assets/a_image/issue_icon.webp'},
-  ];
+  late List<String> availableCategories;
   final Set<int> selected = {};
+  bool isUpdating = false; // 카테고리 업데이트 중 상태
+
+  @override
+  void initState() {
+    super.initState();
+    // 선택된 언론사들에 따라 사용 가능한 카테고리 목록을 가져옴
+    availableCategories = CategoryModel.getAvailableCategories(widget.selectedMedia);
+    
+    // 기존에 저장된 카테고리 정보가 있다면 불러와서 선택 상태로 설정
+    _loadSavedCategories();
+  }
+
+  // 저장된 카테고리 정보 불러오기
+  Future<void> _loadSavedCategories() async {
+    try {
+      final apiService = ApiService();
+      final savedCategories = await apiService.getUserCategories();
+      
+      // 저장된 카테고리와 현재 사용 가능한 카테고리를 비교하여 선택 상태 설정
+      setState(() {
+        for (int i = 0; i < availableCategories.length; i++) {
+          if (savedCategories.categories.contains(availableCategories[i])) {
+            selected.add(i);
+          }
+        }
+      });
+    } catch (e) {
+      print('저장된 카테고리 불러오기 실패: $e');
+      // 오류가 발생해도 계속 진행
+    }
+  }
+
+  // 카테고리 선택 변경 시 API로 업데이트
+  Future<void> _updateCategories() async {
+    // 최소 3개 이상 선택되었을 때만 API 호출
+    List<String> selectedCategories = selected
+        .map((index) => availableCategories[index])
+        .toList();
+    
+    if (selectedCategories.length < 3) return;
+    
+    setState(() {
+      isUpdating = true;
+    });
+    
+    try {
+      final apiService = ApiService();
+      final updatedCategories = await apiService.updateUserCategories(selectedCategories);
+      print('카테고리 업데이트 성공: ${updatedCategories.categories}');
+      
+      // 성공 메시지 표시
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('카테고리가 업데이트되었습니다.'),
+            backgroundColor: Color(0xFF0565FF),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      print('카테고리 업데이트 실패: $e');
+      // 오류 메시지 표시
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('카테고리 업데이트 실패: $e'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isUpdating = false;
+        });
+      }
+    }
+  }
+
+  List<Widget> _buildCategoryGrid() {
+    List<Widget> rows = [];
+    int itemsPerRow = 3;
+    
+    for (int i = 0; i < availableCategories.length; i += itemsPerRow) {
+      List<Widget> rowItems = [];
+      
+      for (int j = 0; j < itemsPerRow; j++) {
+        int idx = i + j;
+        if (idx >= availableCategories.length) {
+          // 빈 공간 추가
+          rowItems.add(const SizedBox(width: 96, height: 104));
+        } else {
+          final category = availableCategories[idx];
+          final isSelected = selected.contains(idx);
+          final iconSize = category.length > 5 ? 52.0 : 61.0;
+          
+          rowItems.add(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: GestureDetector(
+                onTap: () async {
+                  setState(() {
+                    if (isSelected) {
+                      selected.remove(idx);
+                    } else {
+                      selected.add(idx);
+                    }
+                  });
+                  
+                  // 카테고리 선택이 변경될 때마다 API로 업데이트
+                  await _updateCategories();
+                },
+                child: Container(
+                  width: 96,
+                  height: 104,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                    border: isSelected
+                        ? Border.all(
+                            color: const Color(0xFF0565FF),
+                            width: 2)
+                        : null,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        CategoryModel.getCategoryImage(category),
+                        width: iconSize,
+                        height: iconSize,
+                        fit: BoxFit.contain,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        category,
+                        style: TextStyle(
+                          fontSize: category.length > 5 ? 13 : 15,
+                          fontWeight: FontWeight.w500,
+                          color: isSelected
+                              ? const Color(0xFF0565FF)
+                              : Colors.black,
+                          fontFamily: 'Pretendard',
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+      }
+      
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: rowItems,
+          ),
+        ),
+      );
+    }
+    
+    return rows;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,108 +245,54 @@ class _CategorySelectPageState extends State<CategorySelectPage> {
                 const SizedBox(height: 24),
                 // 카드 리스트를 Expanded로 감싸기
                 Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(4, (rowIdx) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(3, (colIdx) {
-                            int idx = rowIdx * 3 + colIdx;
-                            if (idx >= categories.length)
-                              return const SizedBox.shrink();
-                            final isSelected = selected.contains(idx);
-                            // 정치(0), 문화(3), IT·과학(4), 생활·건강(7), 연예(9)만 아이콘 크기 61
-                            final bigIconIdx = [0, 3, 4, 7, 9];
-                            final iconSize =
-                                bigIconIdx.contains(idx) ? 61.0 : 52.0;
-                            return Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 10),
-                              child: GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    if (isSelected) {
-                                      selected.remove(idx);
-                                    } else {
-                                      selected.add(idx);
-                                    }
-                                  });
-                                },
-                                child: Container(
-                                  width: 96,
-                                  height: 104,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(18),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.08),
-                                        blurRadius: 12,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                    border: isSelected
-                                        ? Border.all(
-                                            color: const Color(0xFF0565FF),
-                                            width: 2)
-                                        : null,
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      categories[idx]['image']!.isNotEmpty
-                                          ? Image.asset(
-                                              categories[idx]['image']!,
-                                              width: iconSize,
-                                              height: iconSize,
-                                              fit: BoxFit.contain,
-                                            )
-                                          : Icon(Icons.image,
-                                              size: iconSize,
-                                              color: Colors.grey),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        categories[idx]['name']!,
-                                        style: TextStyle(
-                                          fontSize:
-                                              categories[idx]['name']!.length >
-                                                      5
-                                                  ? 13
-                                                  : 15,
-                                          fontWeight: FontWeight.w500,
-                                          color: isSelected
-                                              ? const Color(0xFF0565FF)
-                                              : Colors.black,
-                                          fontFamily: 'Pretendard',
-                                        ),
-                                        textAlign: TextAlign.center,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          }),
-                        ),
-                      );
-                    }),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: _buildCategoryGrid(),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
-                // 최소 3개 선택 안내 텍스트
-                const Center(
-                  child: Text(
-                    '최소 3개 선택',
-                    style: TextStyle(
-                      color: Color(0xFF0565FF),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Pretendard',
-                    ),
+                // 최소 3개 선택 안내 텍스트 + 업데이트 상태
+                Center(
+                  child: Column(
+                    children: [
+                      Text(
+                        '최소 3개 선택',
+                        style: TextStyle(
+                          color: const Color(0xFF0565FF),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Pretendard',
+                        ),
+                      ),
+                      if (isUpdating) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0565FF)),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '업데이트 중...',
+                              style: TextStyle(
+                                color: const Color(0xFF0565FF),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Pretendard',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -182,9 +301,17 @@ class _CategorySelectPageState extends State<CategorySelectPage> {
                   child: GestureDetector(
                     onTap: selected.length >= 3
                         ? () {
+                            // 선택된 카테고리들을 추출
+                            List<String> selectedCategories = selected
+                                .map((index) => availableCategories[index])
+                                .toList();
+                            
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) => const KeywordSelectPage(),
+                                builder: (context) => KeywordSelectPage(
+                                  selectedMedia: widget.selectedMedia,
+                                  selectedCategories: selectedCategories,
+                                ),
                               ),
                             );
                           }

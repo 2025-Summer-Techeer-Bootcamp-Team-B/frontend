@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'category_select.dart';
+import '../../models/category_model.dart';
 
 class MediaSelectPage extends StatefulWidget {
   const MediaSelectPage({super.key});
@@ -10,7 +11,7 @@ class MediaSelectPage extends StatefulWidget {
 
 class _MediaSelectPageState extends State<MediaSelectPage> {
   final List<Map<String, String>> mediaList = [
-    {'name': 'SBS', 'image': 'assets/a_image/sbs_news_logo.png'},
+    {'name': 'SBS뉴스', 'image': 'assets/a_image/sbs_news_logo.png'},
     {'name': '한국경제', 'image': 'assets/a_image/hkyungjae_news_logo.png'},
     {'name': '매일경제', 'image': 'assets/a_image/maeil_news_logo.png'},
   ];
@@ -190,10 +191,16 @@ class _MediaSelectPageState extends State<MediaSelectPage> {
                       ),
                       onPressed: selected.isNotEmpty
                           ? () {
+                              // 선택된 언론사들의 이름을 추출
+                              List<String> selectedMediaNames = selected
+                                  .map((index) => mediaList[index]['name']!)
+                                  .toList();
+                              
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      const CategorySelectPage(),
+                                  builder: (context) => CategorySelectPage(
+                                    selectedMedia: selectedMediaNames,
+                                  ),
                                 ),
                               );
                             }
