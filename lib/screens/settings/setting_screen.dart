@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'contents_setting/category_edit.dart';
 import 'contents_setting/keyword_edit.dart';
 import 'contents_setting/media_edit.dart';
 import 'display_setting/font_size.dart';
