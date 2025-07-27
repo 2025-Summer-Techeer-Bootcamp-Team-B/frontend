@@ -85,12 +85,16 @@ class UserPreferences {
   final List<String>? category;     // 관심 카테고리
   final List<String>? keyword;      // 관심 키워드
   final String? voiceType;          // TTS 음성 타입
+  final int? fontSize;              // 폰트 크기
+  final bool? autoPlay;             // 자동재생 여부
 
   UserPreferences({
     this.press,
     this.category,
     this.keyword,
     this.voiceType,
+    this.fontSize,
+    this.autoPlay,
   });
 
   factory UserPreferences.fromJson(Map<String, dynamic> json) {
@@ -105,6 +109,8 @@ class UserPreferences {
           ? List<String>.from(json['keyword'])
           : null,
       voiceType: json['voice_type'],
+      fontSize: json['font_size'],
+      autoPlay: json['auto_play'],
     );
   }
 
@@ -114,6 +120,8 @@ class UserPreferences {
       'category': category,
       'keyword': keyword,
       'voice_type': voiceType,
+      'font_size': fontSize,
+      'auto_play': autoPlay,
     };
   }
 
@@ -129,18 +137,22 @@ class UserPreferences {
     List<String>? category,
     List<String>? keyword,
     String? voiceType,
+    int? fontSize,
+    bool? autoPlay,
   }) {
     return UserPreferences(
       press: press ?? this.press,
       category: category ?? this.category,
       keyword: keyword ?? this.keyword,
       voiceType: voiceType ?? this.voiceType,
+      fontSize: fontSize ?? this.fontSize,
+      autoPlay: autoPlay ?? this.autoPlay,
     );
   }
 
   @override
   String toString() {
-    return 'UserPreferences(press: $press, category: $category, keyword: $keyword, voiceType: $voiceType)';
+    return 'UserPreferences(press: $press, category: $category, keyword: $keyword, voiceType: $voiceType, fontSize: $fontSize, autoPlay: $autoPlay)';
   }
 }
 

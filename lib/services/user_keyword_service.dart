@@ -12,7 +12,8 @@ class UserKeywordService {
   Future<UserKeyword> getUserKeywords() async {
     try {
       final response = await _apiService.getUserKeywords();
-      return response;
+      // UserKeywords -> UserKeyword로 변환
+      return UserKeyword(keyword: response.keywords);
     } catch (e) {
       rethrow;
     }

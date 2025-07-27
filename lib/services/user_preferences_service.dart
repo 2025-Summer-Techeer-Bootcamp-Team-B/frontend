@@ -31,12 +31,12 @@ class UserPreferencesService {
   }) async {
     try {
       final preferences = UserPreferences(
-        preferredVoice: preferredVoice,
+        voiceType: preferredVoice,
         fontSize: fontSize,
         autoPlay: autoPlay,
-        favoriteCategories: favoriteCategories,
-        favoriteKeywords: favoriteKeywords,
-        favoriteMedia: favoriteMedia,
+        category: favoriteCategories,
+        keyword: favoriteKeywords,
+        press: favoriteMedia,
       );
 
       final request = UpdateUserRequest(preferences: preferences);
