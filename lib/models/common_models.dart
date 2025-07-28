@@ -40,7 +40,7 @@ class ErrorResponse {
 
   factory ErrorResponse.fromJson(Map<String, dynamic> json) {
     return ErrorResponse(
-      message: json['message'] ?? '알 수 없는 오류가 발생했습니다.',
+      message: json['message'] ?? json['detail'] ?? '알 수 없는 오류가 발생했습니다.',
       error: json['error'],
       statusCode: json['statusCode'],
       errors: json['errors'] != null

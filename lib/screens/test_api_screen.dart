@@ -35,7 +35,7 @@ class _TestApiScreenState extends State<TestApiScreen> {
             ),
             const SizedBox(height: 16),
             const Text(
-              '서버 주소: http://34.47.70.30',
+              '서버 주소: http://yosm-n.kro.kr',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey,

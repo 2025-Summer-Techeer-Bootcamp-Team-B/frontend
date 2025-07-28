@@ -1,0 +1,10 @@
+{
+    "configurations": [
+      {
+        "name": "Flutter Web",
+        "request": "launch",
+        "type": "dart",
+        "args": ["-d", "chrome", "--web-port", "4200"]
+      }
+    ]
+  }

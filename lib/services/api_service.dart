@@ -13,12 +13,12 @@ class ApiService {
   String? _refreshToken; // 리프레시 토큰 추가
 
   // TODO: 백엔드 배포 후 실제 URL로 변경
-  static const String baseUrl = 'http://34.47.70.30'; // 실제 백엔드 서버
+  static const String baseUrl = 'http://yosm-n.kro.kr'; // 실제 백엔드 서버
 
   void initialize() async {
     // 저장된 토큰들 불러오기
     await _loadTokens();
-    
+
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 30),
@@ -38,6 +38,9 @@ class ApiService {
         // 토큰이 있으면 헤더에 추가
         if (_accessToken != null) {
           options.headers['Authorization'] = 'Bearer $_accessToken';
+          print('토큰 추가됨: Bearer ${_accessToken!.substring(0, 20)}...');
+        } else {
+          print('토큰이 없습니다!');
         }
 
         handler.next(options);
@@ -53,21 +56,24 @@ class ApiService {
         if (error.response?.statusCode == 401 && _refreshToken != null) {
           try {
             // 토큰 갱신 요청
-            final refreshRequest = RefreshTokenRequest(refreshToken: _refreshToken!);
+            final refreshRequest =
+                RefreshTokenRequest(refreshToken: _refreshToken!);
             final refreshResponse = await _dio.post(
               ApiEndpoints.refreshToken,
               data: refreshRequest.toJson(),
             );
-            
+
             final authResponse = AuthResponse.fromJson(refreshResponse.data);
-            
+
             // 새 토큰들 저장 (메모리 + 영구 저장소)
-            await setTokens(authResponse.accessToken ?? '', authResponse.refreshToken ?? '');
-            
+            await setTokens(authResponse.accessToken ?? '',
+                authResponse.refreshToken ?? '');
+
             // 새 토큰으로 원래 요청 재시도
             final originalRequest = error.requestOptions;
-            originalRequest.headers['Authorization'] = 'Bearer ${authResponse.accessToken}';
-            
+            originalRequest.headers['Authorization'] =
+                'Bearer ${authResponse.accessToken}';
+
             final response = await _dio.fetch(originalRequest);
             handler.resolve(response);
             return;
@@ -126,6 +132,9 @@ class ApiService {
   // 토큰 상태 확인 (public getter)
   bool get hasAccessToken => _accessToken != null;
   bool get hasRefreshToken => _refreshToken != null;
+
+  // 토큰 값 확인 (디버깅용)
+  String? get accessTokenValue => _accessToken;
 
   // GET 요청
   Future<Response> get(String path,
@@ -214,7 +223,7 @@ class ApiService {
       final requestData = {
         'voice_type': voiceType,
       };
-      
+
       final response = await put(ApiEndpoints.userVoiceType, data: requestData);
       return UserPreferences.fromJson(response.data);
     } catch (e) {
@@ -238,7 +247,7 @@ class ApiService {
       final requestData = {
         'category': categories,
       };
-      
+
       final response = await post(ApiEndpoints.userCategory, data: requestData);
       return UserCategories.fromJson(response.data);
     } catch (e) {
@@ -252,7 +261,7 @@ class ApiService {
       final requestData = {
         'category': categories,
       };
-      
+
       final response = await put(ApiEndpoints.userCategory, data: requestData);
       return UserCategories.fromJson(response.data);
     } catch (e) {
@@ -276,9 +285,23 @@ class ApiService {
       final requestData = {
         'press': press,
       };
-      
+
       final response = await put(ApiEndpoints.userPress, data: requestData);
       return UserPress.fromJson(response.data);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // 사용자 관심 키워드 업데이트 (PUT - 기존 데이터 수정)
+  Future<UserKeywords> updateUserKeywords(List<String> keywords) async {
+    try {
+      final requestData = {
+        'keyword': keywords,
+      };
+
+      final response = await put(ApiEndpoints.userKeyword, data: requestData);
+      return UserKeywords.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
     }
@@ -310,6 +333,8 @@ class ApiService {
               return Exception('접근 권한이 없습니다.');
             case 404:
               return Exception('요청한 리소스를 찾을 수 없습니다.');
+            case 409:
+              return Exception('이미 존재하는 이메일입니다.');
             case 422:
               return Exception('입력 데이터가 올바르지 않습니다.');
             case 500:
@@ -332,21 +357,24 @@ class ApiService {
 // API 엔드포인트 상수
 class ApiEndpoints {
   // 인증 관련
-  static const String login = '/auth/login';
-  static const String signup = '/auth/signup';
-  static const String refreshToken = '/auth/refresh';
+  static const String login = '/api/v1/auth/login';
+  static const String register = '/api/v1/auth/register';
+  static const String refreshToken = '/api/v1/auth/refresh';
   static const String logout = '/auth/logout';
-  static const String checkEmailDuplicate = '/auth/check-email';
+  static const String checkEmailExists = '/api/v1/auth/exists';
 
   // 사용자 관련
   static const String userProfile = '/users/profile';
   static const String updateProfile = '/users/profile';
   static const String changePassword = '/users/change-password';
   static const String userPreferences = '/users/preferences'; // 사용자 설정 추가
-  static const String userPress = '/api/v1/user/press'; // 사용자 관심 언론사/카테고리/키워드 조회
+  static const String userPress =
+      '/api/v1/user/press'; // 사용자 관심 언론사/카테고리/키워드 조회
   static const String userKeyword = '/api/v1/user/keyword'; // 사용자 관심 키워드 조회
-  static const String userVoiceType = '/api/v1/user/voice-type'; // 사용자 TTS 음성 타입 조회
-  static const String userCategory = '/api/v1/user/category'; // 사용자 관심 카테고리 조회/저장
+  static const String userVoiceType =
+      '/api/v1/user/voice-type'; // 사용자 TTS 음성 타입 조회
+  static const String userCategory =
+      '/api/v1/user/category'; // 사용자 관심 카테고리 조회/저장
 
   // 뉴스 관련
   static const String breakingNews = '/news/breaking';

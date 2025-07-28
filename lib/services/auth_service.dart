@@ -27,17 +27,17 @@ class AuthService {
   }
 
   /// 회원가입
-  Future<AuthResponse> signup({
+  Future<AuthResponse> register({
     required String email,
     required String password,
   }) async {
     try {
-      final request = SignupRequest(
+      final request = RegisterRequest(
         email: email,
         password: password,
       );
       final response = await _apiService.post(
-        '/api/v1/auth/register',
+        ApiEndpoints.register,
         data: request.toJson(),
       );
       final authResponse = AuthResponse.fromJson(response.data);
@@ -87,7 +87,7 @@ class AuthService {
   Future<bool> checkEmailDuplicate(String email) async {
     try {
       final response = await _apiService.get(
-        '/api/v1/auth/exists',
+        ApiEndpoints.checkEmailExists,
         queryParameters: {'email': email},
       );
       final result = EmailExistsResponse.fromJson(response.data);
