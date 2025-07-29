@@ -2,59 +2,36 @@ import 'common_models.dart';
 
 // 뉴스/기사 관련 모델들
 class ArticleModel {
-  final int id;
+  final String id;
   final String title;
-  final String content;
-  final String summary;
-  final String source;
-  final String url;
-  final String? imageUrl;
-  final DateTime publishedAt;
-  final DateTime createdAt;
-  final List<String> categories;
-  final List<String> keywords;
-  final bool isBreaking;
-  final bool isFavorite;
-  final int viewCount;
-  final int playCount;
+  final String? thumbnailImageUrl;
+  final String? categoryName;
+  final String? author;
+  final DateTime? publishedAt;
+  final String? femaleAudioUrl;
+  final String? maleAudioUrl;
 
   ArticleModel({
     required this.id,
     required this.title,
-    required this.content,
-    required this.summary,
-    required this.source,
-    required this.url,
-    this.imageUrl,
-    required this.publishedAt,
-    required this.createdAt,
-    required this.categories,
-    required this.keywords,
-    required this.isBreaking,
-    required this.isFavorite,
-    required this.viewCount,
-    required this.playCount,
+    this.thumbnailImageUrl,
+    this.categoryName,
+    this.author,
+    this.publishedAt,
+    this.femaleAudioUrl,
+    this.maleAudioUrl,
   });
 
   factory ArticleModel.fromJson(Map<String, dynamic> json) {
     return ArticleModel(
-      id: json['id'] ?? 0,
+      id: json['id'] ?? '',
       title: json['title'] ?? '',
-      content: json['content'] ?? '',
-      summary: json['summary'] ?? '',
-      source: json['source'] ?? '',
-      url: json['url'] ?? '',
-      imageUrl: json['imageUrl'],
-      publishedAt: DateTime.parse(
-          json['publishedAt'] ?? DateTime.now().toIso8601String()),
-      createdAt:
-          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
-      categories: List<String>.from(json['categories'] ?? []),
-      keywords: List<String>.from(json['keywords'] ?? []),
-      isBreaking: json['isBreaking'] ?? false,
-      isFavorite: json['isFavorite'] ?? false,
-      viewCount: json['viewCount'] ?? 0,
-      playCount: json['playCount'] ?? 0,
+      thumbnailImageUrl: json['thumbnail_image_url'],
+      categoryName: json['category_name'],
+      author: json['author'],
+      publishedAt: json['published_at'] != null ? DateTime.tryParse(json['published_at']) : null,
+      femaleAudioUrl: json['female_audio_url'],
+      maleAudioUrl: json['male_audio_url'],
     );
   }
 
@@ -62,25 +39,18 @@ class ArticleModel {
     return {
       'id': id,
       'title': title,
-      'content': content,
-      'summary': summary,
-      'source': source,
-      'url': url,
-      'imageUrl': imageUrl,
-      'publishedAt': publishedAt.toIso8601String(),
-      'createdAt': createdAt.toIso8601String(),
-      'categories': categories,
-      'keywords': keywords,
-      'isBreaking': isBreaking,
-      'isFavorite': isFavorite,
-      'viewCount': viewCount,
-      'playCount': playCount,
+      'thumbnail_image_url': thumbnailImageUrl,
+      'category_name': categoryName,
+      'author': author,
+      'published_at': publishedAt?.toIso8601String(),
+      'female_audio_url': femaleAudioUrl,
+      'male_audio_url': maleAudioUrl,
     };
   }
 }
 
 class CategoryModel {
-  final int id;
+  final String id;
   final String name;
   final String? description;
   final String? icon;
@@ -96,7 +66,7 @@ class CategoryModel {
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
     return CategoryModel(
-      id: json['id'] ?? 0,
+      id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
       description: json['description'],
       icon: json['icon'],
@@ -116,7 +86,7 @@ class CategoryModel {
 }
 
 class KeywordModel {
-  final int id;
+  final String id;
   final String keyword;
   final String? description;
   final bool isActive;
@@ -130,7 +100,7 @@ class KeywordModel {
 
   factory KeywordModel.fromJson(Map<String, dynamic> json) {
     return KeywordModel(
-      id: json['id'] ?? 0,
+      id: json['id']?.toString() ?? '',
       keyword: json['keyword'] ?? '',
       description: json['description'],
       isActive: json['isActive'] ?? true,

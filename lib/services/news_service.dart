@@ -13,10 +13,29 @@ class NewsService {
   Future<List<ArticleModel>> getBreakingNews() async {
     try {
       final response = await _apiService.get(ApiEndpoints.breakingNews);
-      return (response.data['articles'] as List?)
+      return (response.data as List?)
               ?.map((article) => ArticleModel.fromJson(article))
               .toList() ??
           [];
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 사용자 관심 카테고리 기사 조회
+  Future<List<ArticleModel>> getPreferredCategoryArticles(String categoryName) async {
+    try {
+      // 실제 API 호출 (임시로 recent API 사용)
+      final response = await _apiService.get('/api/v1/articles/recent');
+      final List<dynamic> allArticles = response.data;
+      
+      // 카테고리별로 필터링
+      final filteredArticles = allArticles
+          .where((article) => article['category_name'] == categoryName)
+          .map((article) => ArticleModel.fromJson(article))
+          .toList();
+      
+      return filteredArticles;
     } catch (e) {
       rethrow;
     }
@@ -26,7 +45,7 @@ class NewsService {
   Future<List<ArticleModel>> getTodayNews() async {
     try {
       final response = await _apiService.get(ApiEndpoints.todayNews);
-      return (response.data['articles'] as List?)
+      return (response.data as List?)
               ?.map((article) => ArticleModel.fromJson(article))
               .toList() ??
           [];
@@ -199,6 +218,19 @@ class NewsService {
       );
 
       return NewsSearchResponse.fromJson(response.data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 추천 뉴스 조회 (OpenSearch 기반)
+  Future<List<ArticleModel>> getRecommendedArticles() async {
+    try {
+      final response = await _apiService.get('/api/v1/articles/recommend');
+      return (response.data as List?)
+              ?.map((article) => ArticleModel.fromJson(article))
+              .toList() ??
+          [];
     } catch (e) {
       rethrow;
     }

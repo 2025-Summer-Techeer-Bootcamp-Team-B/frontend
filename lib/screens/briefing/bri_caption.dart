@@ -7,32 +7,13 @@ class BriCaptionScreen extends StatefulWidget {
   final String imageUrl;
   final String title;
   final String reporter;
-  final String category;
   final List<String> scriptLines;
 
   const BriCaptionScreen({
     required this.imageUrl,
     required this.title,
     required this.reporter,
-    this.category = '경제',
-    this.scriptLines = const [
-      'SK하이닉스는 올해 상반기에 구성원들에게',
-      "월 기본급의 150%를 '생산성 격려금'으로 지급할 예정이다.",
-      '',
-      '이는 고대역폭 메모리 시장 1위를 차지하며',
-      '역대급 실적을 달성한 결과이다.',
-      '',
-      'PI는 영업이익률에 따라 지급되며,',
-      'SK하이닉스는 1분기에 42%의 영업이익률을 기록했다.',
-      '',
-      '2분기 실적은 매출 20조 6천164억 원,',
-      '영업이익 9조 222억 원으로 예상되며,',
-      '하반기에도 높은 실적이 예상되어',
-      '성과급이 상승할 것으로 전망된다.',
-      '',
-      '증권가는 SK하이닉스의 연간 영업이익이',
-      '37조 원에 달할 것으로 예상하고 있다.',
-    ],
+    required this.scriptLines,
     Key? key,
   }) : super(key: key);
 
@@ -255,32 +236,23 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
                       // 대표 이미지 (왼쪽)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.asset(
-                          'assets/a_image/SKhynix.jpg',
-                          width: 64,
-                          height: 64,
-                          fit: BoxFit.cover,
-                        ),
+                        child: widget.imageUrl.isNotEmpty
+                            ? Image.network(
+                                widget.imageUrl,
+                                width: 64,
+                                height: 64,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.asset(
+                                'assets/a_image/SKhynix.jpg',
+                                width: 64,
+                                height: 64,
+                                fit: BoxFit.cover,
+                              ),
                       ),
                       const SizedBox(width: 20),
                       // 카테고리명 추가
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0565FF),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          widget.category,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Pretendard',
-                          ),
-                        ),
-                      ),
+                      // 카테고리명(파란색 배경) Container 부분 삭제
                       const SizedBox(width: 12),
                       // 타이틀 (오른쪽, 사진에 겹치지 않게)
                       Expanded(
@@ -383,10 +355,9 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
                     ),
                   ),
                 ),
-                // 하단 3개 버튼 (브리핑과 동일)
+                // 하단 3개 아이콘을 briefing_screen.dart와 동일하게 배치
                 Padding(
-                  padding: const EdgeInsets.only(
-                      bottom: 24, left: 32, right: 32), // 40에서 24로 변경
+                  padding: const EdgeInsets.only(bottom: 24, left: 32, right: 32),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -416,25 +387,14 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
                           height: 28,
                         ),
                       ),
-                      // 기사 원문보기 버튼
-                      Column(
-                        children: [
-                          Image.asset(
-                            'assets/a_image/newspaper.png',
-                            width: 28,
-                            height: 28,
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            '기사 원문보기',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 12,
-                              fontFamily: 'Pretendard',
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
+                      // 신문 아이콘 (기사 원문보기 텍스트 제거)
+                      GestureDetector(
+                        onTap: () {},
+                        child: Image.asset(
+                          'assets/a_image/newspaper.png',
+                          width: 28,
+                          height: 28,
+                        ),
                       ),
                     ],
                   ),
