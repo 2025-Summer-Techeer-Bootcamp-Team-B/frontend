@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'keyword_select.dart';
+<<<<<<< HEAD:lib/screens/auth/interest/category_select.dart
 import 'media_select.dart';
 import '../../../models/category_model.dart';
 import '../../../services/api_service.dart';
@@ -11,12 +12,18 @@ class CategorySelectPage extends StatefulWidget {
     super.key,
     required this.selectedMedia,
   });
+=======
+
+class CategorySelectPage extends StatefulWidget {
+  const CategorySelectPage({super.key});
+>>>>>>> origin/main:news_app/lib/screens/auth/interest/category_select.dart
 
   @override
   State<CategorySelectPage> createState() => _CategorySelectPageState();
 }
 
 class _CategorySelectPageState extends State<CategorySelectPage> {
+<<<<<<< HEAD:lib/screens/auth/interest/category_select.dart
   late List<String> availableCategories;
   final Set<int> selected = {};
   bool isUpdating = false; // 카테고리 업데이트 중 상태
@@ -198,6 +205,23 @@ class _CategorySelectPageState extends State<CategorySelectPage> {
     
     return rows;
   }
+=======
+  final List<Map<String, String>> categories = [
+    {'name': '정치', 'image': 'assets/a_image/politics_icon.webp'},
+    {'name': '경제', 'image': 'assets/a_image/economy.png'},
+    {'name': '사회', 'image': 'assets/a_image/society_icon.webp'},
+    {'name': '문화', 'image': 'assets/a_image/culture_icon.webp'},
+    {'name': 'IT·과학', 'image': 'assets/a_image/IT_icon.webp'},
+    {'name': '국제', 'image': 'assets/a_image/global_icon.png'},
+    {'name': '재난·기후·환경', 'image': 'assets/a_image/environment_icon.webp'},
+    {'name': '생활·건강', 'image': 'assets/a_image/health_icon.webp'},
+    {'name': '스포츠', 'image': 'assets/a_image/sport_icon.png'},
+    {'name': '연예', 'image': 'assets/a_image/entertainment.webp'},
+    {'name': '날씨', 'image': 'assets/a_image/ weather_icon.png'},
+    {'name': '이슈', 'image': 'assets/a_image/issue_icon.webp'},
+  ];
+  final Set<int> selected = {};
+>>>>>>> origin/main:news_app/lib/screens/auth/interest/category_select.dart
 
   @override
   Widget build(BuildContext context) {
@@ -245,6 +269,7 @@ class _CategorySelectPageState extends State<CategorySelectPage> {
                 const SizedBox(height: 24),
                 // 카드 리스트를 Expanded로 감싸기
                 Expanded(
+<<<<<<< HEAD:lib/screens/auth/interest/category_select.dart
                   child: SingleChildScrollView(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -293,12 +318,117 @@ class _CategorySelectPageState extends State<CategorySelectPage> {
                         ),
                       ],
                     ],
+=======
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(4, (rowIdx) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(3, (colIdx) {
+                            int idx = rowIdx * 3 + colIdx;
+                            if (idx >= categories.length)
+                              return const SizedBox.shrink();
+                            final isSelected = selected.contains(idx);
+                            // 정치(0), 문화(3), IT·과학(4), 생활·건강(7), 연예(9)만 아이콘 크기 61
+                            final bigIconIdx = [0, 3, 4, 7, 9];
+                            final iconSize =
+                                bigIconIdx.contains(idx) ? 61.0 : 52.0;
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 10),
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    if (isSelected) {
+                                      selected.remove(idx);
+                                    } else {
+                                      selected.add(idx);
+                                    }
+                                  });
+                                },
+                                child: Container(
+                                  width: 96,
+                                  height: 104,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(18),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.08),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                    border: isSelected
+                                        ? Border.all(
+                                            color: const Color(0xFF0565FF),
+                                            width: 2)
+                                        : null,
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      categories[idx]['image']!.isNotEmpty
+                                          ? Image.asset(
+                                              categories[idx]['image']!,
+                                              width: iconSize,
+                                              height: iconSize,
+                                              fit: BoxFit.contain,
+                                            )
+                                          : Icon(Icons.image,
+                                              size: iconSize,
+                                              color: Colors.grey),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        categories[idx]['name']!,
+                                        style: TextStyle(
+                                          fontSize:
+                                              categories[idx]['name']!.length >
+                                                      5
+                                                  ? 13
+                                                  : 15,
+                                          fontWeight: FontWeight.w500,
+                                          color: isSelected
+                                              ? const Color(0xFF0565FF)
+                                              : Colors.black,
+                                          fontFamily: 'Pretendard',
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // 최소 3개 선택 안내 텍스트
+                Center(
+                  child: Text(
+                    '최소 3개 선택',
+                    style: const TextStyle(
+                      color: Color(0xFF0565FF),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Pretendard',
+                    ),
+>>>>>>> origin/main:news_app/lib/screens/auth/interest/category_select.dart
                   ),
                 ),
                 const SizedBox(height: 8),
                 // 하단 다음 버튼
                 Center(
                   child: GestureDetector(
+<<<<<<< HEAD:lib/screens/auth/interest/category_select.dart
                     onTap: selected.length >= 3
                         ? () {
                             // 선택된 카테고리들을 추출
@@ -316,6 +446,15 @@ class _CategorySelectPageState extends State<CategorySelectPage> {
                             );
                           }
                         : null,
+=======
+                    onTap: selected.length >= 3 ? () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const KeywordSelectPage(),
+                        ),
+                      );
+                    } : null,
+>>>>>>> origin/main:news_app/lib/screens/auth/interest/category_select.dart
                     child: Container(
                       width: 120,
                       height: 48,

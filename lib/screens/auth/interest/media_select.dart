@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'category_select.dart';
+<<<<<<< HEAD:lib/screens/auth/interest/media_select.dart
 import '../../../models/category_model.dart';
 import '../../../services/api_service.dart';
+=======
+>>>>>>> origin/main:news_app/lib/screens/auth/interest/media_select.dart
 
 class MediaSelectPage extends StatefulWidget {
   const MediaSelectPage({super.key});
@@ -303,6 +306,7 @@ class _MediaSelectPageState extends State<MediaSelectPage> {
                         ),
                         elevation: 0,
                       ),
+<<<<<<< HEAD:lib/screens/auth/interest/media_select.dart
                       onPressed: selected.isNotEmpty
                           ? () {
                               // 선택된 언론사들의 이름을 추출
@@ -319,6 +323,16 @@ class _MediaSelectPageState extends State<MediaSelectPage> {
                               );
                             }
                           : null,
+=======
+                      onPressed: () {
+                        // 카테고리 선택 페이지로 이동
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const CategorySelectPage(),
+                          ),
+                        );
+                      },
+>>>>>>> origin/main:news_app/lib/screens/auth/interest/media_select.dart
                       child: CustomPaint(
                         size: const Size(40, 32),
                         painter: _LongArrowPainter(),

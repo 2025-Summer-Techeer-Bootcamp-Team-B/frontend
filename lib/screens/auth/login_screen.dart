@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'start_screen.dart';
+<<<<<<< HEAD:lib/screens/auth/login_screen.dart
 import '../../services/auth_service.dart';
 import '../../models/auth_models.dart';
 import '../home/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+=======
+import 'signup/signup_email_screen.dart';
+>>>>>>> origin/main:news_app/lib/screens/auth/login_screen.dart
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,10 +24,15 @@ class _LoginScreenState extends State<LoginScreen> {
   bool emailFocused = false;
   bool passwordFocused = false;
   bool isPasswordVisible = false;
+<<<<<<< HEAD:lib/screens/auth/login_screen.dart
   bool isLoading = false;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
+=======
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+>>>>>>> origin/main:news_app/lib/screens/auth/login_screen.dart
 
   void handleKeyPress(String key) {
     setState(() {
@@ -113,6 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+<<<<<<< HEAD:lib/screens/auth/login_screen.dart
   Future<void> handleLogin() async {
     if (!canLogin || isLoading) return;
 
@@ -159,12 +169,29 @@ class _LoginScreenState extends State<LoginScreen> {
         });
       }
     }
+=======
+  void handleLogin() {
+    // 로그인 기능 - 홈 스크린으로 이동 비활성화
+    print('로그인: $email, $password');
+    // Navigator.pushAndRemoveUntil(
+    //   context,
+    //   MaterialPageRoute(builder: (context) => const HomeScreen()),
+    //   (route) => false,
+    // );
+>>>>>>> origin/main:news_app/lib/screens/auth/login_screen.dart
   }
 
   void handleSignup() {
     // 회원가입 페이지로 이동
+<<<<<<< HEAD:lib/screens/auth/login_screen.dart
     print('회원가입 페이지로 이동');
     // Navigator.push(context, MaterialPageRoute(builder: (context) => SignupEmailScreen()));
+=======
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SignupEmailScreen()),
+    );
+>>>>>>> origin/main:news_app/lib/screens/auth/login_screen.dart
   }
 
   void togglePasswordVisibility() {
@@ -373,17 +400,29 @@ class _LoginScreenState extends State<LoginScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           child: GestureDetector(
+<<<<<<< HEAD:lib/screens/auth/login_screen.dart
                             onTap:
                                 (canLogin && !isLoading) ? handleLogin : null,
+=======
+                            onTap: canLogin ? handleLogin : null,
+>>>>>>> origin/main:news_app/lib/screens/auth/login_screen.dart
                             child: Container(
                               width: double.infinity,
                               height: 56,
                               decoration: BoxDecoration(
+<<<<<<< HEAD:lib/screens/auth/login_screen.dart
                                 color: (canLogin && !isLoading)
                                     ? const Color(0xFF0565FF)
                                     : const Color(0xFF0565FF).withOpacity(0.5),
                                 borderRadius: BorderRadius.circular(28),
                                 boxShadow: (canLogin && !isLoading)
+=======
+                                color: canLogin
+                                    ? const Color(0xFF0565FF)
+                                    : const Color(0xFF0565FF).withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(28),
+                                boxShadow: canLogin
+>>>>>>> origin/main:news_app/lib/screens/auth/login_screen.dart
                                     ? [
                                         BoxShadow(
                                           color: const Color(0xFF0565FF)
@@ -394,6 +433,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ]
                                     : null,
                               ),
+<<<<<<< HEAD:lib/screens/auth/login_screen.dart
                               child: Center(
                                 child: isLoading
                                     ? const SizedBox(
@@ -413,6 +453,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                           fontFamily: 'Pretendard',
                                         ),
                                       ),
+=======
+                              child: const Center(
+                                child: Text(
+                                  '로그인',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Pretendard',
+                                  ),
+                                ),
+>>>>>>> origin/main:news_app/lib/screens/auth/login_screen.dart
                               ),
                             ),
                           ),

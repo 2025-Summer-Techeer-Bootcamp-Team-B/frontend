@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../start_screen.dart';
 import 'signup_email_screen.dart';
+import '../interest/media_select.dart';
 
 class SignupPwScreen extends StatefulWidget {
   const SignupPwScreen({super.key});
@@ -110,8 +111,11 @@ class _SignupPwScreenState extends State<SignupPwScreen> {
   }
 
   void handleNext() {
-    // 다음 단계로 진행
-    print('다음: $password, $confirmPassword');
+    // 다음 단계로 진행 - 미디어 선택 페이지로 이동
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const MediaSelectPage()),
+    );
   }
 
   bool get isPasswordValid => password.length >= 8;

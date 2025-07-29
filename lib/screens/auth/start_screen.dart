@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'signup/signup_email_screen.dart';
 import 'signup/signup_pw_screen.dart';
+<<<<<<< HEAD:lib/screens/auth/start_screen.dart
+=======
+import 'login_screen.dart';
+>>>>>>> origin/main:news_app/lib/screens/auth/start_screen.dart
 
 class StartScreen extends StatefulWidget {
   const StartScreen({super.key});
@@ -114,7 +118,11 @@ class _StartScreenState extends State<StartScreen>
       });
       Navigator.push(
         context,
+<<<<<<< HEAD:lib/screens/auth/start_screen.dart
         MaterialPageRoute(builder: (context) => const SignupPwScreen()),
+=======
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+>>>>>>> origin/main:news_app/lib/screens/auth/start_screen.dart
       );
     });
   }
@@ -125,6 +133,20 @@ class _StartScreenState extends State<StartScreen>
       backgroundColor: Colors.white,
       body: Stack(
         children: [
+<<<<<<< HEAD:lib/screens/auth/start_screen.dart
+=======
+          // 테두리 Container를 Stack의 맨 아래에 위치
+          Container(
+            width: 393,
+            height: 852,
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: const Color(0xFF767676),
+                width: 1,
+              ),
+            ),
+          ),
+>>>>>>> origin/main:news_app/lib/screens/auth/start_screen.dart
           // 메인 컨테이너
           Container(
             width: 393,
@@ -317,6 +339,7 @@ class _StartScreenState extends State<StartScreen>
                 ),
               ),
             ),
+<<<<<<< HEAD:lib/screens/auth/start_screen.dart
 
           // 테두리
           Container(
@@ -329,6 +352,8 @@ class _StartScreenState extends State<StartScreen>
               ),
             ),
           ),
+=======
+>>>>>>> origin/main:news_app/lib/screens/auth/start_screen.dart
         ],
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD:lib/screens/auth/interest/keyword_select.dart
 import '../../../services/api_service.dart';
 // import '../../home/home_screen.dart';
 
@@ -11,6 +12,12 @@ class KeywordSelectPage extends StatefulWidget {
     required this.selectedMedia,
     required this.selectedCategories,
   });
+=======
+// import '../../home/home_screen.dart';
+
+class KeywordSelectPage extends StatefulWidget {
+  const KeywordSelectPage({super.key});
+>>>>>>> origin/main:news_app/lib/screens/auth/interest/keyword_select.dart
 
   @override
   State<KeywordSelectPage> createState() => _KeywordSelectPageState();
@@ -41,9 +48,13 @@ class _KeywordSelectPageState extends State<KeywordSelectPage> {
 
   void _addKeyword(String value) {
     final trimmed = value.trim();
+<<<<<<< HEAD:lib/screens/auth/interest/keyword_select.dart
     if (trimmed.isNotEmpty &&
         !keywords.contains(trimmed) &&
         keywords.length < 20) {
+=======
+    if (trimmed.isNotEmpty && !keywords.contains(trimmed) && keywords.length < 20) {
+>>>>>>> origin/main:news_app/lib/screens/auth/interest/keyword_select.dart
       setState(() {
         keywords.add(trimmed);
       });
@@ -245,6 +256,7 @@ class _KeywordSelectPageState extends State<KeywordSelectPage> {
                 height: 56,
                 margin: const EdgeInsets.only(bottom: 24),
                 child: ElevatedButton(
+<<<<<<< HEAD:lib/screens/auth/interest/keyword_select.dart
                   onPressed: keywords.isNotEmpty
                       ? () async {
                           try {
@@ -296,6 +308,21 @@ class _KeywordSelectPageState extends State<KeywordSelectPage> {
                           }
                         }
                       : null,
+=======
+                  // onPressed: keywords.isNotEmpty
+                  //     ? () {
+                  //         // 완료 처리 - 홈 화면으로 이동
+                  //         Navigator.of(context).pushAndRemoveUntil(
+                  //           MaterialPageRoute(
+                  //             builder: (context) => const HomeScreen(),
+                  //           ),
+                  //           (route) => false, // 모든 이전 화면 제거
+                  //         );
+                  //       }
+                  //     : null,
+                  onPressed: null, // 홈 스크린으로 이동 비활성화
+
+>>>>>>> origin/main:news_app/lib/screens/auth/interest/keyword_select.dart
                   style: ElevatedButton.styleFrom(
                     backgroundColor: keywords.isNotEmpty
                         ? const Color(0xFF0565FF)
@@ -305,7 +332,11 @@ class _KeywordSelectPageState extends State<KeywordSelectPage> {
                       borderRadius: BorderRadius.circular(28),
                     ),
                     elevation: keywords.isNotEmpty ? 4 : 0,
+<<<<<<< HEAD:lib/screens/auth/interest/keyword_select.dart
                     shadowColor: keywords.isNotEmpty
+=======
+                    shadowColor: keywords.isNotEmpty 
+>>>>>>> origin/main:news_app/lib/screens/auth/interest/keyword_select.dart
                         ? const Color(0xFF0565FF).withOpacity(0.3)
                         : null,
                   ),
