@@ -13,7 +13,7 @@ class ApiService {
   String? _refreshToken; // 리프레시 토큰 추가
 
   // TODO: 백엔드 배포 후 실제 URL로 변경
-  static const String baseUrl = 'http://yosm-n.kro.kr'; // 실제 백엔드 서버
+  static const String baseUrl = 'http://yosm-n.kro.kr:8000'; // 실제 백엔드 서버
 
   void initialize() async {
     // 저장된 토큰들 불러오기
@@ -302,6 +302,58 @@ class ApiService {
 
       final response = await put(ApiEndpoints.userKeyword, data: requestData);
       return UserKeywords.fromJson(response.data);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // 새로운 채팅 대화 시작
+  Future<ChatResponse> startChatConversation(String message, {String? articleId}) async {
+    try {
+      final requestData = {
+        'message': message,
+        if (articleId != null) 'article_id': articleId,
+      };
+
+      final response = await post('/api/v1/chat/start', data: requestData);
+      return ChatResponse.fromJson(response.data);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // 기존 대화에 메시지 전송
+  Future<ChatResponse> sendChatMessage(String message, String conversationId, {String? articleId}) async {
+    try {
+      final requestData = {
+        'message': message,
+        'conversation_id': conversationId,
+        if (articleId != null) 'article_id': articleId,
+      };
+
+      final response = await post('/api/v1/chat/message', data: requestData);
+      return ChatResponse.fromJson(response.data);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // 대화 정보 조회
+  Future<ConversationInfo> getConversationInfo(String conversationId) async {
+    try {
+      final response = await get('${ApiEndpoints.chat}/$conversationId');
+      return ConversationInfo.fromJson(response.data);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // 대화 기록 조회
+  Future<List<ConversationInfo>> getChatHistory() async {
+    try {
+      final response = await get(ApiEndpoints.chatHistory);
+      final List<dynamic> historyList = response.data['conversations'] ?? [];
+      return historyList.map((json) => ConversationInfo.fromJson(json)).toList();
     } catch (e) {
       throw _handleError(e);
     }

@@ -14,7 +14,6 @@ class StartScreen extends StatefulWidget {
 class _StartScreenState extends State<StartScreen>
     with TickerProviderStateMixin {
   bool showContent = false;
-  bool isLoading = false;
 
   late AnimationController _subtitleController;
   late AnimationController _newsAnimationController;
@@ -95,307 +94,237 @@ class _StartScreenState extends State<StartScreen>
   }
 
   void handleSignup() {
-    setState(() {
-      isLoading = true;
-    });
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() {
-        isLoading = false;
-      });
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const SignupEmailScreen()),
-      );
-    });
+    print('회원가입 버튼 클릭됨'); // 디버그 로그 추가
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SignupEmailScreen()),
+    );
   }
 
   void handleLogin() {
-    setState(() {
-      isLoading = true;
-    });
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() {
-        isLoading = false;
-      });
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
-    });
+    print('로그인 버튼 클릭됨'); // 디버그 로그 추가
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          // 메인 컨테이너
-          Container(
-            width: 393,
-            height: 852,
-            color: Colors.white,
-            child: Opacity(
-              opacity: isLoading ? 0.5 : 1.0,
-              child: Stack(
-                children: [
-                  // 로고 이미지 (애니메이션 없음)
-                  Positioned(
-                    left: 62,
-                    top: 175,
-                    child: Opacity(
-                      opacity: showContent ? 1.0 : 0.0,
-                      child: Container(
-                        width: 269,
-                        height: 169,
-                        decoration: const BoxDecoration(
-                          image: DecorationImage(
-                            image:
-                                AssetImage('assets/a_image/newsapp_logo.png'),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+      body: SafeArea(
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: Colors.white,
+          child: Stack(
+            children: [
+              // 로고 이미지
+              Positioned(
+                left: screenWidth * 0.16,
+                top: screenHeight * 0.21,
+                child: Opacity(
+                  opacity: showContent ? 1.0 : 0.0,
+                  child: Container(
+                    width: screenWidth * 0.68,
+                    height: screenHeight * 0.20,
+                    decoration: const BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage('assets/a_image/newsapp_logo.png'),
+                        fit: BoxFit.contain,
                       ),
-                    ),
-                  ),
-
-                  // NEWS 애니메이션 - "요즘 NEWS" → "요즘 N"
-                  AnimatedBuilder(
-                    animation: _newsAnimation,
-                    builder: (context, child) {
-                      return Positioned(
-                        left: 0,
-                        right: 0,
-                        top: 340,
-                        child: Opacity(
-                          opacity: showContent ? 1.0 : 0.0,
-                          child: Center(
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 1000),
-                              transform: Matrix4.translationValues(
-                                  _ewsFadeAnimation.value < 0.1
-                                      ? (1.0 - _ewsFadeAnimation.value) * 50
-                                      : 0,
-                                  0,
-                                  0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Text(
-                                    '요즘 ',
-                                    style: TextStyle(
-                                      fontSize: 42,
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.w700,
-                                      fontFamily: 'HakgyoansimAllimjang',
-                                    ),
-                                  ),
-                                  // N 부분 (색깔만 바뀜)
-                                  Text(
-                                    'N',
-                                    style: TextStyle(
-                                      fontSize: 42,
-                                      color: _ewsFadeAnimation.value > 0.5
-                                          ? Colors.black
-                                          : const Color(0xFF0566FF),
-                                      fontWeight: FontWeight.w700,
-                                      fontFamily: 'HakgyoansimAllimjang',
-                                    ),
-                                  ),
-                                  // EWS 부분 (시작할 때는 보임)
-                                  if (_ewsFadeAnimation.value > 0.1)
-                                    const Text(
-                                      'EWS',
-                                      style: TextStyle(
-                                        fontSize: 42,
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.w700,
-                                        fontFamily: 'HakgyoansimAllimjang',
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-
-                  // EWS 페이드 아웃 애니메이션 (별도로 분리)
-                  AnimatedBuilder(
-                    animation: _ewsFadeAnimation,
-                    builder: (context, child) {
-                      return const SizedBox.shrink(); // EWS는 "요즘 NEWS" 안에서만 표시
-                    },
-                  ),
-
-                  // 부제목 "NEWS를 스마트하게" - 애니메이션 (세 번째)
-                  AnimatedBuilder(
-                    animation: _subtitleAnimation,
-                    builder: (context, child) {
-                      return Positioned(
-                        left: 0,
-                        right: 0,
-                        top: 410,
-                        child: Opacity(
-                          opacity: showContent ? 1.0 : 0.0,
-                          child: Center(
-                            child: RichText(
-                              text: const TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: 'NEWS',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      color: Color(0xFF0566FF),
-                                      fontWeight: FontWeight.w700,
-                                      fontFamily: 'HakgyoansimAllimjang',
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: '를 스마트하게',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      color: Color(0xFF666666),
-                                      fontWeight: FontWeight.w700,
-                                      fontFamily: 'HakgyoansimAllimjang',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-
-                  // 회원가입 버튼
-                  Positioned(
-                    left: 32,
-                    top: 520,
-                    child: GestureDetector(
-                      onTap: isLoading ? null : handleSignup,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: 329,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0566FF),
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            '회원가입',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Pretendard',
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // 로그인 버튼
-                  Positioned(
-                    left: 32,
-                    top: 580,
-                    child: GestureDetector(
-                      onTap: isLoading ? null : handleLogin,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: 329,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: const Color(0xFF0566FF).withOpacity(0.3),
-                            width: 2,
-                          ),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            '로그인',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Color(0xFF0566FF),
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Pretendard',
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // 하단 약관 텍스트
-                  const Positioned(
-                    left: 42,
-                    top: 720,
-                    child: Text(
-                      '계속하기로 서비스 이용약관 및 개인정보처리방침에 동의합니다',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF808080),
-                        fontWeight: FontWeight.w400,
-                        fontFamily: 'Pretendard',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // 로딩 오버레이
-          if (isLoading)
-            Container(
-              width: 393,
-              height: 852,
-              color: Colors.white.withOpacity(0.3),
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(50),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const SizedBox(
-                    width: 32,
-                    height: 32,
-                    child: CircularProgressIndicator(
-                      color: Color(0xFF0566FF),
-                      strokeWidth: 3,
                     ),
                   ),
                 ),
               ),
-            ),
 
-          // 테두리
-          Container(
-            width: 393,
-            height: 852,
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: const Color(0xFF767676),
-                width: 1,
+              // NEWS 애니메이션 - "요즘 NEWS" → "요즘 N"
+              AnimatedBuilder(
+                animation: _newsAnimation,
+                builder: (context, child) {
+                  return Positioned(
+                    left: 0,
+                    right: 0,
+                    top: screenHeight * 0.40,
+                    child: Opacity(
+                      opacity: showContent ? 1.0 : 0.0,
+                      child: Center(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 1000),
+                          transform: Matrix4.translationValues(
+                              _ewsFadeAnimation.value < 0.1
+                                  ? (1.0 - _ewsFadeAnimation.value) * 50
+                                  : 0,
+                              0,
+                              0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                '요즘 ',
+                                style: TextStyle(
+                                  fontSize: 42,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'HakgyoansimAllimjang',
+                                ),
+                              ),
+                              // N 부분 (색깔만 바뀜)
+                              Text(
+                                'N',
+                                style: TextStyle(
+                                  fontSize: 42,
+                                  color: _ewsFadeAnimation.value > 0.5
+                                      ? Colors.black
+                                      : const Color(0xFF0566FF),
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'HakgyoansimAllimjang',
+                                ),
+                              ),
+                              // EWS 부분 (시작할 때는 보임)
+                              if (_ewsFadeAnimation.value > 0.1)
+                                const Text(
+                                  'EWS',
+                                  style: TextStyle(
+                                    fontSize: 42,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w700,
+                                    fontFamily: 'HakgyoansimAllimjang',
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
-            ),
+
+              // 부제목 "NEWS를 스마트하게"
+              AnimatedBuilder(
+                animation: _subtitleAnimation,
+                builder: (context, child) {
+                  return Positioned(
+                    left: 0,
+                    right: 0,
+                    top: screenHeight * 0.48,
+                    child: Opacity(
+                      opacity: showContent ? 1.0 : 0.0,
+                      child: Center(
+                        child: RichText(
+                          text: const TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'NEWS',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  color: Color(0xFF0566FF),
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'HakgyoansimAllimjang',
+                                ),
+                              ),
+                              TextSpan(
+                                text: '를 스마트하게',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  color: Color(0xFF666666),
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'HakgyoansimAllimjang',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+              // 회원가입 버튼
+              Positioned(
+                left: screenWidth * 0.08,
+                top: screenHeight * 0.61,
+                child: SizedBox(
+                  width: screenWidth * 0.84,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: handleSignup,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0566FF),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                    child: const Text(
+                      '회원가입',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Pretendard',
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // 로그인 버튼
+              Positioned(
+                left: screenWidth * 0.08,
+                top: screenHeight * 0.68,
+                child: SizedBox(
+                  width: screenWidth * 0.84,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: handleLogin,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF0566FF),
+                      elevation: 0,
+                      side: BorderSide(
+                        color: const Color(0xFF0566FF).withOpacity(0.3),
+                        width: 2,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                    child: const Text(
+                      '로그인',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Pretendard',
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // 하단 약관 텍스트
+              Positioned(
+                left: screenWidth * 0.11,
+                top: screenHeight * 0.85,
+                child: const Text(
+                  '계속하기로 서비스 이용약관 및 개인정보처리방침에 동의합니다',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF808080),
+                    fontWeight: FontWeight.w400,
+                    fontFamily: 'Pretendard',
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

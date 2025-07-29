@@ -343,3 +343,81 @@ class UserPress {
     return 'UserPress(press: $press)';
   }
 }
+
+// 채팅 응답 모델
+class ChatResponse {
+  final String conversationId;
+  final String response;
+  final Map<String, dynamic>? articleContext;
+
+  ChatResponse({
+    required this.conversationId,
+    required this.response,
+    this.articleContext,
+  });
+
+  factory ChatResponse.fromJson(Map<String, dynamic> json) {
+    return ChatResponse(
+      conversationId: json['conversation_id'] as String,
+      response: json['response'] as String,
+      articleContext: json['article_context'] as Map<String, dynamic>?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'conversation_id': conversationId,
+      'response': response,
+      'article_context': articleContext,
+    };
+  }
+
+  @override
+  String toString() {
+    return 'ChatResponse(conversationId: $conversationId, response: $response, articleContext: $articleContext)';
+  }
+}
+
+// 대화 정보 모델
+class ConversationInfo {
+  final String conversationId;
+  final String? articleId;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final int messageCount;
+
+  ConversationInfo({
+    required this.conversationId,
+    this.articleId,
+    required this.createdAt,
+    this.updatedAt,
+    required this.messageCount,
+  });
+
+  factory ConversationInfo.fromJson(Map<String, dynamic> json) {
+    return ConversationInfo(
+      conversationId: json['conversation_id'] as String,
+      articleId: json['article_id'] as String?,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: json['updated_at'] != null 
+          ? DateTime.parse(json['updated_at'] as String) 
+          : null,
+      messageCount: json['message_count'] as int? ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'conversation_id': conversationId,
+      'article_id': articleId,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt?.toIso8601String(),
+      'message_count': messageCount,
+    };
+  }
+
+  @override
+  String toString() {
+    return 'ConversationInfo(conversationId: $conversationId, articleId: $articleId, createdAt: $createdAt, updatedAt: $updatedAt, messageCount: $messageCount)';
+  }
+}

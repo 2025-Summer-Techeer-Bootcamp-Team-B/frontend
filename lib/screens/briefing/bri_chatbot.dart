@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../services/chat_service.dart';
+import '../../models/chat_message_model.dart';
+import '../../models/common_models.dart';
 
 class BriChatBotScreen extends StatefulWidget {
-  const BriChatBotScreen({Key? key}) : super(key: key);
+  final String? articleId;
+  
+  const BriChatBotScreen({Key? key, this.articleId}) : super(key: key);
 
   @override
   State<BriChatBotScreen> createState() => _BriChatBotScreenState();
@@ -20,29 +25,61 @@ class _BriChatBotScreenState extends State<BriChatBotScreen>
   final List<_ChatMessage> _messages = [
     _ChatMessage(text: "안녕하세요! 궁금한 점이 있으면 언제든 물어보세요.", isUser: false),
   ];
+  
+  // ChatService 인스턴스 추가
+  final ChatService _chatService = ChatService();
+  String? _conversationId;
+  bool _isLoading = false;
+  
+  // 기사 ID (외부에서 설정)
+  String? _articleId;
 
   late AnimationController _titleAnimationController;
   late Animation<Offset> _titleAnimation;
   bool shouldAnimate = false;
   final String articleTitle = "'역대급 실적' SK하이닉스, 상반기 성과급 '150%' 지급";
 
-  void _sendMessage() {
+  void _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
+    
     setState(() {
       _messages.add(_ChatMessage(text: text, isUser: true));
       _controller.clear();
-      Future.delayed(const Duration(milliseconds: 800), () {
-        setState(() {
-          _messages.add(_ChatMessage(text: "챗GPT의 답변 예시입니다.", isUser: false));
-        });
-      });
+      _isLoading = true;
     });
+
+    try {
+      ChatResponse chatResponse;
+      if (_conversationId == null) {
+        // 새로운 대화 시작 (기사 ID 포함)
+        chatResponse = await _chatService.startNewConversation(text, articleId: _articleId);
+        _conversationId = _chatService.currentConversationId;
+      } else {
+        // 기존 대화에 메시지 추가 (기사 ID 포함)
+        chatResponse = await _chatService.sendMessage(text, articleId: _articleId);
+      }
+      
+      setState(() {
+        _messages.add(_ChatMessage(text: chatResponse.response, isUser: false));
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _messages.add(_ChatMessage(text: "죄송합니다. 오류가 발생했습니다: $e", isUser: false));
+        _isLoading = false;
+      });
+      print('챗봇 API 에러: $e');
+    }
   }
 
   @override
   void initState() {
     super.initState();
+    
+    // 기사 ID 설정
+    _articleId = widget.articleId;
+    
     _titleAnimationController = AnimationController(
       duration: const Duration(seconds: 8),
       vsync: this,
