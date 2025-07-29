@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/chat_service.dart';
+import '../../services/api_service.dart';
 import '../../models/chat_message_model.dart';
 import '../../models/common_models.dart';
 
@@ -18,8 +19,59 @@ class _ChatMessage {
   _ChatMessage({required this.text, required this.isUser});
 }
 
+// 로딩 애니메이션 위젯
+class _LoadingAnimation extends StatelessWidget {
+  final Animation<double> dot1Animation;
+  final Animation<double> dot2Animation;
+  final Animation<double> dot3Animation;
+
+  const _LoadingAnimation({
+    required this.dot1Animation,
+    required this.dot2Animation,
+    required this.dot3Animation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: dot1Animation,
+      builder: (context, child) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildDot(dot1Animation),
+            const SizedBox(width: 4),
+            _buildDot(dot2Animation),
+            const SizedBox(width: 4),
+            _buildDot(dot3Animation),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDot(Animation<double> animation) {
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, -8 * animation.value),
+          child: Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0565FF),
+              shape: BoxShape.circle,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _BriChatBotScreenState extends State<BriChatBotScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   final List<_ChatMessage> _messages = [
@@ -37,7 +89,12 @@ class _BriChatBotScreenState extends State<BriChatBotScreen>
   late AnimationController _titleAnimationController;
   late Animation<Offset> _titleAnimation;
   bool shouldAnimate = false;
-  final String articleTitle = "'역대급 실적' SK하이닉스, 상반기 성과급 '150%' 지급";
+  
+  // 로딩 애니메이션 컨트롤러들
+  late AnimationController _loadingAnimationController;
+  late Animation<double> _dot1Animation;
+  late Animation<double> _dot2Animation;
+  late Animation<double> _dot3Animation;
 
   void _sendMessage() async {
     final text = _controller.text.trim();
@@ -48,6 +105,9 @@ class _BriChatBotScreenState extends State<BriChatBotScreen>
       _controller.clear();
       _isLoading = true;
     });
+    
+    // 로딩 애니메이션 시작
+    _loadingAnimationController.repeat();
 
     try {
       ChatResponse chatResponse;
@@ -64,11 +124,17 @@ class _BriChatBotScreenState extends State<BriChatBotScreen>
         _messages.add(_ChatMessage(text: chatResponse.response, isUser: false));
         _isLoading = false;
       });
+      
+      // 로딩 애니메이션 중지
+      _loadingAnimationController.stop();
     } catch (e) {
       setState(() {
         _messages.add(_ChatMessage(text: "죄송합니다. 오류가 발생했습니다: $e", isUser: false));
         _isLoading = false;
       });
+      
+      // 로딩 애니메이션 중지
+      _loadingAnimationController.stop();
       print('챗봇 API 에러: $e');
     }
   }
@@ -79,6 +145,11 @@ class _BriChatBotScreenState extends State<BriChatBotScreen>
     
     // 기사 ID 설정
     _articleId = widget.articleId;
+    
+    // 기사 정보가 있으면 ChatService에 설정
+    if (_articleId != null) {
+      _loadArticleInfo();
+    }
     
     _titleAnimationController = AnimationController(
       duration: const Duration(seconds: 8),
@@ -91,14 +162,91 @@ class _BriChatBotScreenState extends State<BriChatBotScreen>
       parent: _titleAnimationController,
       curve: Curves.linear,
     ));
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (articleTitle.length > 14) {
+    
+    // 로딩 애니메이션 초기화
+    _loadingAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+    
+    // 각 점의 애니메이션 (시간차를 두어 순차적으로 움직이게)
+    _dot1Animation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _loadingAnimationController,
+      curve: const Interval(0.0, 0.6, curve: Curves.easeInOut),
+    ));
+    
+    _dot2Animation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _loadingAnimationController,
+      curve: const Interval(0.2, 0.8, curve: Curves.easeInOut),
+    ));
+    
+    _dot3Animation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _loadingAnimationController,
+      curve: const Interval(0.4, 1.0, curve: Curves.easeInOut),
+    ));
+  }
+  
+  // 기사 정보 로드
+  Future<void> _loadArticleInfo() async {
+    if (_articleId == null) return;
+    
+    try {
+      final apiService = ApiService();
+      await apiService.initialize();
+      final response = await apiService.get('/api/v1/articles/$_articleId');
+      final data = response.data;
+      
+      // ChatService에 기사 정보 설정
+      print('API 응답 데이터: $data');
+      print('썸네일 URL: ${data['thumbnail_image_url']}');
+      
+      // ChatService에 기사 정보 설정
+      _chatService.setArticleInfo(
+        articleId: _articleId,
+        title: data['title'],
+        category: data['category_name'],
+        thumbnail: data['thumbnail_image_url'],
+      );
+      
+      // UI 강제 업데이트
+      if (mounted) {
         setState(() {
-          shouldAnimate = true;
+          print('기사 정보 설정 완료: ${_chatService.currentArticleTitle}');
+          print('썸네일 URL: ${_chatService.currentArticleThumbnail}');
         });
-        _titleAnimationController.repeat();
+        
+        // 잠시 후 한 번 더 업데이트 (이미지 로딩 보장)
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            setState(() {
+              print('UI 재업데이트 완료');
+            });
+          }
+        });
       }
-    });
+      
+      // 제목 애니메이션 설정
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final title = _chatService.currentArticleTitle ?? '기사 제목을 불러오는 중...';
+        if (title.length > 14) {
+          setState(() {
+            shouldAnimate = true;
+          });
+          _titleAnimationController.repeat();
+        }
+      });
+    } catch (e) {
+      print('기사 정보 로드 에러: $e');
+    }
   }
 
   @override
@@ -136,19 +284,69 @@ class _BriChatBotScreenState extends State<BriChatBotScreen>
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 기사 사진 (placeholder)
+                        // 기사 사진
                         GestureDetector(
                           onTap: () {
                             Navigator.of(context).pop();
                           },
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(
-                              'assets/a_image/SKhynix.jpg',
-                              width: 64,
-                              height: 64,
-                              fit: BoxFit.cover,
-                            ),
+                            child: _chatService.currentArticleThumbnail != null && _chatService.currentArticleThumbnail!.isNotEmpty
+                                ? Image.network(
+                                    '${_chatService.currentArticleThumbnail!}?t=${DateTime.now().millisecondsSinceEpoch}',
+                                    width: 64,
+                                    height: 64,
+                                    fit: BoxFit.cover,
+                                    headers: const {
+                                      'Cache-Control': 'no-cache',
+                                      'Pragma': 'no-cache',
+                                    },
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return Container(
+                                        width: 64,
+                                        height: 64,
+                                        color: Colors.grey[300],
+                                        child: const Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Color(0xFF0565FF),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    errorBuilder: (context, error, stackTrace) {
+                                      print('이미지 로드 에러: $error');
+                                      print('이미지 URL: ${_chatService.currentArticleThumbnail}');
+                                      // 기본 이미지 표시
+                                      return Container(
+                                        width: 64,
+                                        height: 64,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF0565FF).withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: const Icon(
+                                          Icons.article,
+                                          size: 32,
+                                          color: Color(0xFF0565FF),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Container(
+                                    width: 64,
+                                    height: 64,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF0565FF).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Icon(
+                                      Icons.article,
+                                      size: 32,
+                                      color: Color(0xFF0565FF),
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -164,9 +362,9 @@ class _BriChatBotScreenState extends State<BriChatBotScreen>
                                   color: const Color(0xFF0565FF),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
-                                child: const Text(
-                                  '경제',
-                                  style: TextStyle(
+                                child: Text(
+                                  _chatService.currentArticleCategory ?? '기사',
+                                  style: const TextStyle(
                                     fontSize: 13,
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -189,7 +387,7 @@ class _BriChatBotScreenState extends State<BriChatBotScreen>
                                         ? SlideTransition(
                                             position: _titleAnimation,
                                             child: Text(
-                                              articleTitle,
+                                              _chatService.currentArticleTitle ?? '기사 제목을 불러오는 중...',
                                               style: const TextStyle(
                                                 fontSize: 18,
                                                 fontWeight: FontWeight.w500,
@@ -201,7 +399,7 @@ class _BriChatBotScreenState extends State<BriChatBotScreen>
                                             ),
                                           )
                                         : Text(
-                                            articleTitle,
+                                            _chatService.currentArticleTitle ?? '기사 제목을 불러오는 중...',
                                             style: const TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.w500,
@@ -233,8 +431,42 @@ class _BriChatBotScreenState extends State<BriChatBotScreen>
                     child: ListView.builder(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 24),
-                      itemCount: _messages.length,
+                      itemCount: _messages.length + (_isLoading ? 1 : 0),
                       itemBuilder: (context, index) {
+                        // 로딩 중이고 마지막 인덱스라면 로딩 애니메이션 표시
+                        if (_isLoading && index == _messages.length) {
+                          return Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              constraints: const BoxConstraints(maxWidth: 260),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.only(
+                                  topLeft: const Radius.circular(18),
+                                  topRight: const Radius.circular(18),
+                                  bottomLeft: const Radius.circular(4),
+                                  bottomRight: const Radius.circular(18),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.03),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: _LoadingAnimation(
+                                dot1Animation: _dot1Animation,
+                                dot2Animation: _dot2Animation,
+                                dot3Animation: _dot3Animation,
+                              ),
+                            ),
+                          );
+                        }
+                        
                         final msg = _messages[index];
                         return Align(
                           alignment: msg.isUser
@@ -360,6 +592,7 @@ class _BriChatBotScreenState extends State<BriChatBotScreen>
   @override
   void dispose() {
     _titleAnimationController.dispose();
+    _loadingAnimationController.dispose();
     super.dispose();
   }
 }
