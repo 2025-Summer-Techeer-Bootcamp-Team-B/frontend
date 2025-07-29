@@ -22,6 +22,7 @@ import 'screens/auth/interest/voice_select.dart';
 import 'screens/test_api_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'providers/tts_provider.dart';
+import 'screens/auth/onboarding.dart';
 // import 'screens/home/dfs.dart';
 // import 'screens/favorites/favorites_screen_toggle_off.dart';
 
@@ -44,7 +45,11 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: '뉴스 브리핑 앱',
         debugShowCheckedModeBanner: false,
-        home: const CustomHomeScreen(),
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          fontFamily: 'Pretendard',
+        ),
+        home: const OnboardingScreen(), // 스플래시 화면으로 시작
       ),
     );
   }

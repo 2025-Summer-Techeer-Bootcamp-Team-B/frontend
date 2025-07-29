@@ -20,7 +20,7 @@ class _SignupEmailScreenState extends State<SignupEmailScreen> {
 
   Future<void> checkEmailDuplicate() async {
     if (email.isEmpty || isCheckingEmail) return;
-    
+
     setState(() {
       isCheckingEmail = true;
       emailError = '';
@@ -50,7 +50,8 @@ class _SignupEmailScreenState extends State<SignupEmailScreen> {
     if (!isEmailAvailable || password.isEmpty || isLoading) return;
     setState(() => isLoading = true);
     try {
-      final response = await _authService.signup(email: email.trim(), password: password);
+      final response =
+          await _authService.register(email: email.trim(), password: password);
       // 회원가입 성공 시 처리 (예: 다음 화면 이동)
       print('회원가입 성공: ${response.email}');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -105,18 +106,21 @@ class _SignupEmailScreenState extends State<SignupEmailScreen> {
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
-                  onPressed: email.isEmpty || isCheckingEmail ? null : checkEmailDuplicate,
+                  onPressed: email.isEmpty || isCheckingEmail
+                      ? null
+                      : checkEmailDuplicate,
                   child: isCheckingEmail
                       ? const SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
                         )
                       : const Text('중복검사'),
                 ),
               ],
             ),
-            
+
             // 이메일 상태 표시
             if (isEmailChecked) ...[
               const SizedBox(height: 8),
@@ -138,7 +142,7 @@ class _SignupEmailScreenState extends State<SignupEmailScreen> {
                 ],
               ),
             ],
-            
+
             if (emailError.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(
@@ -171,7 +175,10 @@ class _SignupEmailScreenState extends State<SignupEmailScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: (isEmailAvailable && password.isNotEmpty && !isLoading) ? handleSignup : null,
+                onPressed:
+                    (isEmailAvailable && password.isNotEmpty && !isLoading)
+                        ? handleSignup
+                        : null,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
@@ -179,7 +186,8 @@ class _SignupEmailScreenState extends State<SignupEmailScreen> {
                     ? const SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
                       )
                     : const Text('회원가입'),
               ),
@@ -189,4 +197,4 @@ class _SignupEmailScreenState extends State<SignupEmailScreen> {
       ),
     );
   }
-} 
+}

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'signup/signup_email_screen.dart';
 import 'signup/signup_pw_screen.dart';
+import 'login_screen.dart';
 
 class StartScreen extends StatefulWidget {
   const StartScreen({super.key});
@@ -15,43 +16,17 @@ class _StartScreenState extends State<StartScreen>
   bool showContent = false;
   bool isLoading = false;
 
-  late AnimationController _logoController;
-  late AnimationController _titleController;
   late AnimationController _subtitleController;
+  late AnimationController _newsAnimationController;
+  late AnimationController _ewsFadeController;
 
-  late Animation<double> _logoAnimation;
-  late Animation<double> _titleAnimation;
   late Animation<double> _subtitleAnimation;
+  late Animation<double> _newsAnimation;
+  late Animation<double> _ewsFadeAnimation;
 
   @override
   void initState() {
     super.initState();
-
-    // 로고 애니메이션
-    _logoController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-    _logoAnimation = Tween<double>(
-      begin: 100.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: _logoController,
-      curve: Curves.easeOut,
-    ));
-
-    // 타이틀 애니메이션
-    _titleController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-    _titleAnimation = Tween<double>(
-      begin: 60.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: _titleController,
-      curve: Curves.easeOut,
-    ));
 
     // 서브타이틀 애니메이션
     _subtitleController = AnimationController(
@@ -66,26 +41,56 @@ class _StartScreenState extends State<StartScreen>
       curve: Curves.easeOut,
     ));
 
+    // NEWS 애니메이션
+    _newsAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    _newsAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _newsAnimationController,
+      curve: Curves.easeInOut,
+    ));
+
+    // EWS 페이드 아웃 애니메이션
+    _ewsFadeController = AnimationController(
+      duration: const Duration(milliseconds: 4000),
+      vsync: this,
+    );
+    _ewsFadeAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(
+      parent: _ewsFadeController,
+      curve: Curves.easeInOut,
+    ));
+
     // 컴포넌트 마운트 후 애니메이션 시작
     Future.delayed(const Duration(milliseconds: 300), () {
       setState(() {
         showContent = true;
       });
-      _logoController.forward();
-      Future.delayed(const Duration(milliseconds: 400), () {
-        _titleController.forward();
-      });
       Future.delayed(const Duration(milliseconds: 200), () {
         _subtitleController.forward();
+      });
+      // NEWS 애니메이션 시작
+      Future.delayed(const Duration(milliseconds: 800), () {
+        _newsAnimationController.forward();
+        // EWS 페이드 아웃 시작
+        Future.delayed(const Duration(milliseconds: 100), () {
+          _ewsFadeController.forward();
+        });
       });
     });
   }
 
   @override
   void dispose() {
-    _logoController.dispose();
-    _titleController.dispose();
     _subtitleController.dispose();
+    _newsAnimationController.dispose();
+    _ewsFadeController.dispose();
     super.dispose();
   }
 
@@ -114,7 +119,7 @@ class _StartScreenState extends State<StartScreen>
       });
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const SignupPwScreen()),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
     });
   }
@@ -134,23 +139,81 @@ class _StartScreenState extends State<StartScreen>
               opacity: isLoading ? 0.5 : 1.0,
               child: Stack(
                 children: [
-                  // 로고 이미지 - 애니메이션 (첫 번째)
+                  // 로고 이미지 (애니메이션 없음)
+                  Positioned(
+                    left: 62,
+                    top: 175,
+                    child: Opacity(
+                      opacity: showContent ? 1.0 : 0.0,
+                      child: Container(
+                        width: 269,
+                        height: 169,
+                        decoration: const BoxDecoration(
+                          image: DecorationImage(
+                            image:
+                                AssetImage('assets/a_image/newsapp_logo.png'),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // NEWS 애니메이션 - "요즘 NEWS" → "요즘 N"
                   AnimatedBuilder(
-                    animation: _logoAnimation,
+                    animation: _newsAnimation,
                     builder: (context, child) {
                       return Positioned(
-                        left: 62,
-                        top: 175 + _logoAnimation.value,
+                        left: 0,
+                        right: 0,
+                        top: 340,
                         child: Opacity(
                           opacity: showContent ? 1.0 : 0.0,
-                          child: Container(
-                            width: 269,
-                            height: 169,
-                            decoration: const BoxDecoration(
-                              image: DecorationImage(
-                                image: AssetImage(
-                                    'assets/a_image/newsapp_logo.png'),
-                                fit: BoxFit.cover,
+                          child: Center(
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 1000),
+                              transform: Matrix4.translationValues(
+                                  _ewsFadeAnimation.value < 0.1
+                                      ? (1.0 - _ewsFadeAnimation.value) * 50
+                                      : 0,
+                                  0,
+                                  0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text(
+                                    '요즘 ',
+                                    style: TextStyle(
+                                      fontSize: 42,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w700,
+                                      fontFamily: 'HakgyoansimAllimjang',
+                                    ),
+                                  ),
+                                  // N 부분 (색깔만 바뀜)
+                                  Text(
+                                    'N',
+                                    style: TextStyle(
+                                      fontSize: 42,
+                                      color: _ewsFadeAnimation.value > 0.5
+                                          ? Colors.black
+                                          : const Color(0xFF0566FF),
+                                      fontWeight: FontWeight.w700,
+                                      fontFamily: 'HakgyoansimAllimjang',
+                                    ),
+                                  ),
+                                  // EWS 부분 (시작할 때는 보임)
+                                  if (_ewsFadeAnimation.value > 0.1)
+                                    const Text(
+                                      'EWS',
+                                      style: TextStyle(
+                                        fontSize: 42,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w700,
+                                        fontFamily: 'HakgyoansimAllimjang',
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
                           ),
@@ -159,45 +222,48 @@ class _StartScreenState extends State<StartScreen>
                     },
                   ),
 
-                  // 메인 타이틀 "요즘어때?" - 애니메이션 (두 번째)
+                  // EWS 페이드 아웃 애니메이션 (별도로 분리)
                   AnimatedBuilder(
-                    animation: _titleAnimation,
+                    animation: _ewsFadeAnimation,
                     builder: (context, child) {
-                      return Positioned(
-                        left: 114,
-                        top: 362 + _titleAnimation.value,
-                        child: Opacity(
-                          opacity: showContent ? 1.0 : 0.0,
-                          child: const Text(
-                            '요즘어때?',
-                            style: TextStyle(
-                              fontSize: 42,
-                              color: Colors.black,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'HakgyoansimAllimjang',
-                            ),
-                          ),
-                        ),
-                      );
+                      return const SizedBox.shrink(); // EWS는 "요즘 NEWS" 안에서만 표시
                     },
                   ),
 
-                  // 부제목 "뉴스를 더 스마트하게" - 애니메이션 (세 번째)
+                  // 부제목 "NEWS를 스마트하게" - 애니메이션 (세 번째)
                   AnimatedBuilder(
                     animation: _subtitleAnimation,
                     builder: (context, child) {
                       return Positioned(
-                        left: 123,
-                        top: 433 + _subtitleAnimation.value,
+                        left: 0,
+                        right: 0,
+                        top: 410,
                         child: Opacity(
                           opacity: showContent ? 1.0 : 0.0,
-                          child: const Text(
-                            '뉴스를 더 스마트하게',
-                            style: TextStyle(
-                              fontSize: 20,
-                              color: Color(0xFF666666),
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'HakgyoansimAllimjang',
+                          child: Center(
+                            child: RichText(
+                              text: const TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: 'NEWS',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      color: Color(0xFF0566FF),
+                                      fontWeight: FontWeight.w700,
+                                      fontFamily: 'HakgyoansimAllimjang',
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: '를 스마트하게',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      color: Color(0xFF666666),
+                                      fontWeight: FontWeight.w700,
+                                      fontFamily: 'HakgyoansimAllimjang',
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -214,10 +280,10 @@ class _StartScreenState extends State<StartScreen>
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         width: 329,
-                        height: 64,
+                        height: 48,
                         decoration: BoxDecoration(
                           color: const Color(0xFF0566FF),
-                          borderRadius: BorderRadius.circular(25),
+                          borderRadius: BorderRadius.circular(24),
                         ),
                         child: const Center(
                           child: Text(
@@ -237,16 +303,16 @@ class _StartScreenState extends State<StartScreen>
                   // 로그인 버튼
                   Positioned(
                     left: 32,
-                    top: 592,
+                    top: 580,
                     child: GestureDetector(
                       onTap: isLoading ? null : handleLogin,
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         width: 329,
-                        height: 64,
+                        height: 48,
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(25),
+                          borderRadius: BorderRadius.circular(24),
                           border: Border.all(
                             color: const Color(0xFF0566FF).withOpacity(0.3),
                             width: 2,

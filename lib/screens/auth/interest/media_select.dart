@@ -30,73 +30,45 @@ class _MediaSelectPageState extends State<MediaSelectPage> {
 
   // 저장된 언론사 정보 불러오기
   Future<void> _loadSavedPress() async {
-    try {
-      final apiService = ApiService();
-      final savedPress = await apiService.getUserPress();
-      
-      // 저장된 언론사와 현재 언론사 목록을 비교하여 선택 상태 설정
-      setState(() {
-        for (int i = 0; i < mediaList.length; i++) {
-          if (savedPress.pressList.contains(mediaList[i]['name'])) {
-            selected.add(i);
-          }
-        }
-      });
-    } catch (e) {
-      print('저장된 언론사 불러오기 실패: $e');
-      // 오류가 발생해도 계속 진행
-    }
+    // 회원가입 과정에서는 API 호출하지 않음
+    print('회원가입 과정: 저장된 언론사 정보 불러오기 건너뜀');
   }
 
   // 언론사 선택 변경 시 API로 업데이트
   Future<void> _updatePress() async {
-    // 최소 1개 이상 선택되었을 때만 API 호출
+    // 최소 1개 이상 선택되었을 때만 처리
     List<String> selectedPress = selected
         .map((index) => mediaList[index]['name']!)
         .toList();
     
     if (selectedPress.isEmpty) return;
     
-    print('언론사 업데이트 시작: $selectedPress');
+    print('언론사 선택: $selectedPress');
     
     setState(() {
       isUpdating = true;
     });
     
-    try {
-      final apiService = ApiService();
-      print('API 서비스 호출 중...');
-      final updatedPress = await apiService.updateUserPress(selectedPress);
-      print('언론사 업데이트 성공: ${updatedPress.pressList}');
-      
-      // 성공 메시지 표시
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('언론사가 업데이트되었습니다.'),
-            backgroundColor: Color(0xFF0565FF),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      print('언론사 업데이트 실패: $e');
-      // 오류 메시지 표시
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('언론사 업데이트 실패: $e'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          isUpdating = false;
-        });
-      }
+    // 회원가입 과정에서는 API 호출하지 않고 로컬에서만 처리
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    print('언론사 선택 완료: $selectedPress');
+    
+    // 성공 메시지 표시
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('언론사가 선택되었습니다.'),
+          backgroundColor: Color(0xFF0565FF),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+    
+    if (mounted) {
+      setState(() {
+        isUpdating = false;
+      });
     }
   }
 

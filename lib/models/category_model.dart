@@ -43,8 +43,8 @@ class CategoryModel {
     "국제": "assets/a_image/global_icon.png",
     "스포츠": "assets/a_image/sport_icon.png",
     "연예": "assets/a_image/entertainment.webp",
-    "증권": "assets/a_image/economy.png", // 증권은 경제 아이콘 사용
-    "부동산": "assets/a_image/economy.png", // 부동산도 경제 아이콘 사용
+    "증권": "assets/a_image/certificate_icon.webp", // 새로 추가된 증권 아이콘
+    "부동산": "assets/a_image/real_estate_icon.png", // 새로 추가된 부동산 아이콘
   };
 
   // 선택된 언론사들에 따라 사용 가능한 카테고리 목록을 반환
@@ -57,7 +57,29 @@ class CategoryModel {
       }
     }
     
-    return allCategories.toList()..sort();
+    // 원하는 순서대로 정렬
+    List<String> categories = allCategories.toList();
+    List<String> orderedCategories = [];
+    
+    // 첫 번째 행: IT, 경제, 국제
+    if (categories.contains('IT')) orderedCategories.add('IT');
+    if (categories.contains('경제')) orderedCategories.add('경제');
+    if (categories.contains('국제')) orderedCategories.add('국제');
+    
+    // 두 번째 행: 문화, 부동산, 사회
+    if (categories.contains('문화')) orderedCategories.add('문화');
+    if (categories.contains('부동산')) orderedCategories.add('부동산');
+    if (categories.contains('사회')) orderedCategories.add('사회');
+    
+    // 세 번째 행: 스포츠, 연예, 정치
+    if (categories.contains('스포츠')) orderedCategories.add('스포츠');
+    if (categories.contains('연예')) orderedCategories.add('연예');
+    if (categories.contains('정치')) orderedCategories.add('정치');
+    
+    // 네 번째 행: 증권 (첫 번째 열에 배치)
+    if (categories.contains('증권')) orderedCategories.add('증권');
+    
+    return orderedCategories;
   }
 
   // 카테고리의 이미지 경로를 반환
