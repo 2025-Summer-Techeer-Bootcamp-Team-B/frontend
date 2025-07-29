@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'start_screen.dart';
+import '../home/home_screen.dart';
 import '../../services/auth_service.dart';
 import '../../models/auth_models.dart';
 import '../home/home_screen.dart';
@@ -135,7 +136,6 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       // 로그인 성공 시 다음 화면으로 이동
-      // TODO: 실제 화면으로 변경
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const CustomHomeScreen()),
