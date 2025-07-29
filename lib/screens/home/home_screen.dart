@@ -7,6 +7,8 @@ import '../briefing/keyword_news.dart';
 import '../briefing/briefing_screen.dart';
 import '../../services/news_service.dart';
 import '../../models/article_models.dart';
+import '../../providers/tts_provider.dart'; // TtsProvider 추가
+import 'package:provider/provider.dart'; // Consumer 추가
 
 class CustomHomeScreen extends StatefulWidget {
   const CustomHomeScreen({Key? key}) : super(key: key);
@@ -26,12 +28,14 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
   // 뉴스 데이터 상태
   List<ArticleModel> _breakingNews = [];
   List<ArticleModel> _keywordNews = [];
+  Map<String, List<ArticleModel>> _categoryArticles = {}; // 카테고리별 기사 저장
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _loadNewsData();
+    _loadRecommendedNews();
   }
 
   // 뉴스 데이터 로드
@@ -43,12 +47,12 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
     try {
       // 각각 await로 받아서 타입 에러 방지
       final breakingNews = await _newsService.getBreakingNews();
-      final keywordNewsResponse = await _newsService.getKeywordNews(keyword: '인기');
-      final keywordNews = keywordNewsResponse.articles;
+      // final keywordNewsResponse = await _newsService.getKeywordNews(keyword: '인기');
+      // final keywordNews = keywordNewsResponse.articles;
 
       setState(() {
         _breakingNews = breakingNews;
-        _keywordNews = keywordNews;
+        // _keywordNews = keywordNews;
         _isLoading = false;
       });
     } catch (e) {
@@ -62,6 +66,38 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('뉴스를 불러오는데 실패했습니다: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // 추천 뉴스 데이터 로드
+  Future<void> _loadRecommendedNews() async {
+    try {
+      final recommended = await _newsService.getRecommendedArticles();
+      setState(() {
+        _keywordNews = recommended;
+      });
+    } catch (e) {
+      print('추천 뉴스 데이터 로드 에러: $e');
+    }
+  }
+
+  // 카테고리별 기사 로드
+  Future<void> _loadCategoryArticles(String categoryName) async {
+    try {
+      final articles = await _newsService.getPreferredCategoryArticles(categoryName);
+      setState(() {
+        _categoryArticles[categoryName] = articles;
+      });
+    } catch (e) {
+      print('카테고리 기사 로드 에러: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$categoryName 카테고리 뉴스를 불러오는데 실패했습니다: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -162,10 +198,11 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 20),
-                        itemCount: 5, // 임시
+                        itemCount: _breakingNews.length, // 받아온 기사 개수만큼
                         separatorBuilder: (_, __) => const SizedBox(width: 16),
                         itemBuilder: (context, idx) {
-                          return _buildPodcastStyleCard();
+                          final article = _breakingNews[idx];
+                          return _buildBreakingNewsCard(article);
                         },
                       ),
                     ),
@@ -201,35 +238,114 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
                     const SizedBox(height: 10),
                     SizedBox(
                       height: 120,
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const BriPlaylistScreen(),
-                            ),
-                          );
-                        },
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          children: [
-                            _buildTodayNewsCard(
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const BriPlaylistScreen(selectedCategory: '경제'),
+                                ),
+                              );
+                            },
+                            child: _buildTodayNewsCard(
                                 category: '경제',
                                 iconPath: 'assets/a_image/economy.png'),
-                            const SizedBox(width: 16),
-                            _buildTodayNewsCard(
+                          ),
+                          const SizedBox(width: 16),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const BriPlaylistScreen(selectedCategory: '정치'),
+                                ),
+                              );
+                            },
+                            child: _buildTodayNewsCard(
                                 category: '정치',
                                 iconPath: 'assets/a_image/politics_icon.webp'),
-                            const SizedBox(width: 16),
-                            _buildTodayNewsCard(
-                                category: '이슈',
-                                iconPath: 'assets/a_image/issue_icon.webp'),
-                            const SizedBox(width: 16),
-                            _buildTodayNewsCard(
+                          ),
+                          const SizedBox(width: 16),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const BriPlaylistScreen(selectedCategory: '사회'),
+                                ),
+                              );
+                            },
+                            child: _buildTodayNewsCard(
+                                category: '사회',
+                                iconPath: 'assets/a_image/society_icon.webp'),
+                          ),
+                          const SizedBox(width: 16),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const BriPlaylistScreen(selectedCategory: 'IT'),
+                                ),
+                              );
+                            },
+                            child: _buildTodayNewsCard(
                                 category: 'IT',
                                 iconPath: 'assets/a_image/IT_icon.webp'),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 16),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const BriPlaylistScreen(selectedCategory: '스포츠'),
+                                ),
+                              );
+                            },
+                            child: _buildTodayNewsCard(
+                                category: '스포츠',
+                                iconPath: 'assets/a_image/sports_icon.webp'),
+                          ),
+                          const SizedBox(width: 16),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const BriPlaylistScreen(selectedCategory: '문화'),
+                                ),
+                              );
+                            },
+                            child: _buildTodayNewsCard(
+                                category: '문화',
+                                iconPath: 'assets/a_image/culture_icon.webp'),
+                          ),
+                          const SizedBox(width: 16),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const BriPlaylistScreen(selectedCategory: '국제'),
+                                ),
+                              );
+                            },
+                            child: _buildTodayNewsCard(
+                                category: '국제',
+                                iconPath: 'assets/a_image/international_icon.webp'),
+                          ),
+                          const SizedBox(width: 16),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const BriPlaylistScreen(selectedCategory: '연예'),
+                                ),
+                              );
+                            },
+                            child: _buildTodayNewsCard(
+                                category: '연예',
+                                iconPath: 'assets/a_image/entertainment_icon.webp'),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 18),
@@ -261,23 +377,27 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
+                    // 키워드별 뉴스 섹션에서 _keywordNews 사용
                     SizedBox(
                       height: 240,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 20),
-                        itemCount: 5, // 임시
+                        itemCount: _keywordNews.length,
                         separatorBuilder: (_, __) => const SizedBox(width: 16),
                         itemBuilder: (context, idx) {
+                          final article = _keywordNews[idx];
                           return GestureDetector(
                             onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const BriefingScreen(),
-                                ),
-                              );
+                              if (article != null) {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => BriefingScreen(article: article),
+                                  ),
+                                );
+                              }
                             },
-                            child: _buildKeywordNewsCard(),
+                            child: _buildKeywordNewsCard(), // 필요시 article을 파라미터로 넘겨서 카드 내용도 연동 가능
                           );
                         },
                       ),
@@ -571,6 +691,414 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          // 재생 버튼 + 시간 - 듣기 버튼만 클릭 가능
+          Positioned(
+            bottom: 16,
+            left: 20,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 22.0),
+              child: GestureDetector(
+                onTap: () {
+                  // 임시로 첫 번째 속보 기사를 사용 (실제로는 해당 키워드 기사를 사용해야 함)
+                  if (_breakingNews.isNotEmpty) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => BriefingScreen(article: _breakingNews[0]),
+                      ),
+                    );
+                  }
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0565FF),
+                    borderRadius: BorderRadius.circular(19),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.play_arrow, size: 16, color: Colors.white),
+                      SizedBox(width: 3),
+                      Text(
+                        '듣기',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // 옵션 ...
+          const Positioned(
+            bottom: 16,
+            right: 20,
+            child: Icon(Icons.more_horiz, color: Colors.grey),
+          ),
+          // 전체 카드 클릭 영역 (듣기 버튼 제외)
+          Positioned.fill(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(22),
+                onTap: () {
+                  // 듣기 버튼이 아닌 다른 부분 클릭 시 기사 화면으로 이동
+                  print('키워드 기사 상세 화면으로 이동');
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlayerBar() {
+    return Consumer<TtsProvider>(
+      builder: (context, tts, child) {
+        final article = tts.currentArticle;
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0565FF).withOpacity(0.13),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: article != null && article.thumbnailImageUrl != null && article.thumbnailImageUrl!.isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          article.thumbnailImageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => const Center(
+                            child: Text(
+                              '뉴스\n사진',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 10, color: Colors.black54, fontFamily: 'Pretendard'),
+                            ),
+                          ),
+                        ),
+                      )
+                    : const Center(
+                        child: Text(
+                          '뉴스\n사진',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 10, color: Colors.black54, fontFamily: 'Pretendard'),
+                        ),
+                      ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  (!tts.hasPlayedOnce) ? '재생 중이 아님' : (article?.title ?? '기사 제목'),
+                  style: const TextStyle(
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              IconButton(
+                icon: Icon(
+                  tts.isPlaying ? Icons.pause : Icons.play_arrow,
+                  size: tts.isPlaying ? 28 : 32,
+                  color: Colors.black,
+                ),
+                onPressed: () async {
+                  try {
+                    if (tts.isPlaying) {
+                      tts.pause();
+                    } else if (tts.currentArticle != null) {
+                      if (tts.currentAudioPlayer != null) {
+                        tts.play(tts.currentArticle!, audioPlayer: tts.currentAudioPlayer);
+                        await tts.currentAudioPlayer!.play();
+                      } else {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => BriefingScreen(article: tts.currentArticle),
+                          ),
+                        );
+                      }
+                    }
+                  } catch (e) {
+                    if (tts.currentArticle != null) {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => BriefingScreen(article: tts.currentArticle),
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // 실시간 속보 기사 카드 위젯
+  Widget _buildBreakingNewsCard(ArticleModel article) {
+    return Container(
+      width: 200,
+      height: 220,
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Stack(
+        children: [
+          // 카드 전체 클릭 (듣기 버튼 영역 제외)
+          GestureDetector(
+            onTap: () {
+              // 카드 다른 부분 클릭 시 BriefingScreen으로 이동 (자동 재생 X)
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => BriefingScreen(article: article, autoPlay: false),
+                ),
+              );
+            },
+            child: Container(
+              width: 200,
+              height: 220,
+              child: Stack(
+                children: [
+                  // 썸네일 이미지
+                  Positioned(
+                    top: 20,
+                    left: 20,
+                    right: 20,
+                    child: Container(
+                      width: 160,
+                      height: 110,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: article.thumbnailImageUrl != null && article.thumbnailImageUrl!.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: Image.network(
+                                article.thumbnailImageUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 60, color: Color(0xFF7B6F5B)),
+                              ),
+                            )
+                          : const Icon(Icons.podcasts, size: 60, color: Color(0xFF7B6F5B)),
+                    ),
+                  ),
+                  // 날짜
+                  Positioned(
+                    top: 140,
+                    left: 20,
+                    child: Text(
+                      article.publishedAt != null ? article.publishedAt!.toIso8601String().split('T').first : '',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.85),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                  // 제목(굵게)
+                  Positioned(
+                    top: 160,
+                    left: 20,
+                    right: 20,
+                    child: Text(
+                      article.title ?? '',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  // 부제목(파란색, 언론사)
+                  Positioned(
+                    top: 182,
+                    left: 20,
+                    right: 20,
+                    child: Text(
+                      article.author ?? '',
+                      style: const TextStyle(
+                        color: Color(0xFF0565FF),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  // 옵션 ...
+                  const Positioned(
+                    bottom: 16,
+                    right: 20,
+                    child: Icon(Icons.more_horiz, color: Colors.white70),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // 듣기 버튼만 Stack의 마지막 child로 분리
+          Positioned(
+            bottom: 16,
+            left: 20,
+            child: GestureDetector(
+              onTap: () {
+                // 듣기 버튼 클릭 시 BriefingScreen으로 이동 (자동 재생 O)
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => BriefingScreen(article: article, autoPlay: true),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(19),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.play_arrow, size: 16, color: Colors.black),
+                    SizedBox(width: 3),
+                    Text(
+                      '듣기',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryArticleCard(ArticleModel article) {
+    return Container(
+      width: 200,
+      height: 220,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.18),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // 기사 썸네일 이미지
+          Positioned(
+            top: 20,
+            left: 20,
+            right: 20,
+            child: Container(
+              width: 140,
+              height: 90,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: article.thumbnailImageUrl != null && article.thumbnailImageUrl!.isNotEmpty
+                    ? Image.network(
+                        article.thumbnailImageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 60, color: Color(0xFF7B6F5B)),
+                      )
+                    : const Icon(Icons.podcasts, size: 60, color: Color(0xFF7B6F5B)),
+              ),
+            ),
+          ),
+          // 날짜
+          Positioned(
+            top: 140,
+            left: 20,
+            child: Text(
+              article.publishedAt != null ? article.publishedAt!.toIso8601String().split('T').first : '',
+              style: TextStyle(
+                color: Colors.black.withOpacity(0.6),
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+          // 제목(굵게)
+          Positioned(
+            top: 160,
+            left: 20,
+            right: 20,
+            child: Text(
+              article.title ?? '',
+              style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          // 출처(파란색)
+          Positioned(
+            top: 182,
+            left: 20,
+            right: 20,
+            child: Text(
+              article.author ?? '',
+              style: const TextStyle(
+                color: Color(0xFF0565FF),
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
           // 재생 버튼 + 시간
           Positioned(
             bottom: 16,
@@ -607,73 +1135,6 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
             bottom: 16,
             right: 20,
             child: Icon(Icons.more_horiz, color: Colors.grey),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPlayerBar() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0565FF).withOpacity(0.13),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Center(
-              child: Text(
-                '뉴스\n사진',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.black54,
-                  fontFamily: 'Pretendard',
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              _isPlaying ? _playingTitle : '재생 중이 아님',
-              style: const TextStyle(
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          IconButton(
-            icon: Icon(
-              _isPlaying ? Icons.pause : Icons.play_arrow,
-              size: _isPlaying ? 28 : 32,
-              color: Colors.black,
-            ),
-            onPressed: () {
-              setState(() {
-                _isPlaying = !_isPlaying;
-                _playingTitle = _isPlaying ? '재생 중인 뉴스기사 제목' : '';
-              });
-            },
           ),
         ],
       ),

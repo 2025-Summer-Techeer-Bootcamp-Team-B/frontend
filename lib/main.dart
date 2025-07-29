@@ -21,35 +21,30 @@ import 'widgets/user_keyword_example.dart';
 import 'screens/auth/interest/voice_select.dart';
 import 'screens/test_api_screen.dart';
 import 'screens/auth/login_screen.dart';
+import 'providers/tts_provider.dart';
 // import 'screens/home/dfs.dart';
 // import 'screens/favorites/favorites_screen_toggle_off.dart';
 
-void main() {
-  // API 서비스 초기화
-  ApiService().initialize();
-
-  runApp(const MyApp()); 
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ApiService().initialize();
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => UserPreferencesProvider()),
-        ChangeNotifierProvider(create: (_) => UserKeywordProvider()),
-        ChangeNotifierProvider(create: (_) => UserVoiceTypeProvider()),
+        ChangeNotifierProvider(create: (_) => TtsProvider()),
+        // 기존 Provider들...
       ],
       child: MaterialApp(
+        title: '뉴스 브리핑 앱',
         debugShowCheckedModeBanner: false,
-        title: '즐겨찾기 데모',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          fontFamily: 'Pretendard',
-        ),
-        home: const LoginScreen(), // 로그인 화면으로 시작
+        home: const CustomHomeScreen(),
       ),
     );
   }

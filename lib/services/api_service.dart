@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../models/common_models.dart';
 import '../models/auth_models.dart';
+import '../models/article_models.dart';
 import 'token_storage.dart';
 
 class ApiService {
@@ -13,9 +14,9 @@ class ApiService {
   String? _refreshToken; // 리프레시 토큰 추가
 
   // TODO: 백엔드 배포 후 실제 URL로 변경
-  static const String baseUrl = 'http://34.47.70.30'; // 실제 백엔드 서버
+  static const String baseUrl = 'http://127.0.0.1:8000'; // 로컬 백엔드 서버
 
-  void initialize() async {
+  Future<void> initialize() async {
     // 저장된 토큰들 불러오기
     await _loadTokens();
     
@@ -284,6 +285,29 @@ class ApiService {
     }
   }
 
+  // 최신 기사 목록 조회 (recent)
+  Future<List<ArticleModel>> fetchRecentArticles() async {
+    try {
+      final response = await get('/api/v1/articles/recent');
+      final List<dynamic> data = response.data;
+      return data.map((json) => ArticleModel.fromJson(json)).toList();
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // 사용자 관심 카테고리 기사 조회
+  Future<List<ArticleModel>> fetchPreferredCategoryArticles(String categoryName) async {
+    try {
+      final response = await get('/api/v1/articles/preferred-category', 
+        queryParameters: {'category_name': categoryName});
+      final List<dynamic> data = response.data;
+      return data.map((json) => ArticleModel.fromJson(json)).toList();
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   // 에러 처리
   Exception _handleError(dynamic error) {
     if (error is DioException) {
@@ -315,17 +339,17 @@ class ApiService {
             case 500:
               return Exception('서버 오류가 발생했습니다.');
             default:
-              return Exception('알 수 없는 오류가 발생했습니다.');
+              return Exception(error.message ?? error.toString() ?? '알 수 없는 오류가 발생했습니다.');
           }
         case DioExceptionType.cancel:
           return Exception('요청이 취소되었습니다.');
         case DioExceptionType.connectionError:
           return Exception('네트워크 연결에 실패했습니다.');
         default:
-          return Exception('알 수 없는 오류가 발생했습니다.');
+          return Exception(error.message ?? error.toString() ?? '알 수 없는 오류가 발생했습니다.');
       }
     }
-    return Exception('알 수 없는 오류가 발생했습니다.');
+    return Exception(error.toString());
   }
 }
 
@@ -349,7 +373,7 @@ class ApiEndpoints {
   static const String userCategory = '/api/v1/user/category'; // 사용자 관심 카테고리 조회/저장
 
   // 뉴스 관련
-  static const String breakingNews = '/news/breaking';
+  static const String breakingNews = '/api/v1/articles/recent';
   static const String todayNews = '/news/today';
   static const String categoryNews = '/news/category';
   static const String keywordNews = '/news/keyword';

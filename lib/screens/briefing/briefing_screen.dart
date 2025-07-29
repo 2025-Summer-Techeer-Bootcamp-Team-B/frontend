@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:dio/dio.dart';
+import '../../models/article_models.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'dart:math';
 import 'bri_playlist.dart';
-import 'bri_caption.dart'; // Added import for BriCaptionScreen
-import 'bri_chatbot.dart'; // BriChatBotScreen import 추가
+import 'bri_caption.dart';
+import 'bri_chatbot.dart';
+import 'package:provider/provider.dart';
+import '../../providers/tts_provider.dart';
 
 class BriefingScreen extends StatefulWidget {
-  const BriefingScreen({super.key});
+  final ArticleModel? article;
+  final bool autoPlay;
+  const BriefingScreen({super.key, this.article, this.autoPlay = false});
 
   @override
   State<BriefingScreen> createState() => _BriefingScreenState();
@@ -14,6 +22,11 @@ class BriefingScreen extends StatefulWidget {
 
 class _BriefingScreenState extends State<BriefingScreen>
     with TickerProviderStateMixin {
+  late AudioPlayer _audioPlayer;
+  bool _isReady = false;
+  String? _audioUrl;
+  Map<String, dynamic>? _articleData;
+
   // Article data state
   String articleTitle = '기사 제목';
   String articleSource = '기사 출처';
@@ -22,123 +35,172 @@ class _BriefingScreenState extends State<BriefingScreen>
   late AnimationController _titleAnimationController;
   late Animation<Offset> _titleAnimation;
 
-  // Audio progress state
-  double audioProgress = 0.0; // 0% to 100%
-  String currentTime = '0:00';
-  String totalTime = '0:00';
-  bool isPlaying = false;
-  late Timer _audioTimer;
-  int _currentSeconds = 0;
-  int _totalSeconds = 0;
 
-  @override
-  void initState() {
-    super.initState();
 
-    // Initialize title animation
-    _titleAnimationController = AnimationController(
-      duration: const Duration(seconds: 10),
-      vsync: this,
-    );
-
-    _titleAnimation = Tween<Offset>(
-      begin: const Offset(0, 0),
-      end: const Offset(-0.3, 0),
-    ).animate(CurvedAnimation(
-      parent: _titleAnimationController,
-      curve: Curves.linear,
-    ));
-
-    // Mock API call - replace with real API integration
-    _fetchArticleData();
-
-    // Initialize audio timer
-    _audioTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (isPlaying) {
-        _updateAudioProgress();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _titleAnimationController.dispose();
-    _audioTimer.cancel();
-    super.dispose();
-  }
-
-  // Mock API call - replace with real API integration
-  Future<void> _fetchArticleData() async {
+  Future<void> _fetchAndSetAudio() async {
+    final articleId = widget.article?.id;
+    if (articleId == null) return;
+    print('기사 ID: $articleId');
     try {
-      // Simulate API delay
-      await Future.delayed(const Duration(milliseconds: 500));
+      // 저장된 토큰 가져오기
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      
+      if (token == null) {
+        print('인증 토큰이 없습니다');
+        return;
+      }
 
-      // Mock data - replace with actual API call
-      // TODO: Replace with real API endpoint
-      final mockApiResponse = {
-        'title': "'역대급 실적' SK하이닉스, 상반기 성과급 '150%' 지급",
-        'source': "연합뉴스",
-        'imageUrl': 'assets/a_image/SKhynix',
-        'audioDuration': 123, // 2:03 in seconds
-      };
-
+      final dio = Dio();
+      // 인증 토큰을 헤더에 추가
+      dio.options.headers['Authorization'] = 'Bearer $token';
+      
+      final response = await dio.get('http://127.0.0.1:8000/api/v1/articles/$articleId');
+      final data = response.data;
+      print('API 응답: $data');
+      
       setState(() {
-        articleTitle = mockApiResponse['title'] as String;
-        articleSource = mockApiResponse['source'] as String;
-        articleImageUrl = mockApiResponse['imageUrl'] as String;
-        _totalSeconds = mockApiResponse['audioDuration'] as int;
-        totalTime = _formatTime(_totalSeconds);
+        _articleData = data;
+        articleTitle = data['title'] ?? '기사 제목';
+        articleSource = data['author'] ?? '기사 출처';
+        articleImageUrl = data['thumbnail_image_url'] ?? 'assets/a_image/burn_airplane.png';
       });
+      
+      final url = data['female_audio_url'];
+      _audioUrl = url;
+      if (url != null && url.isNotEmpty) {
+        final duration = await _audioPlayer.setUrl(url);
+        print('setUrl 완료, duration: $duration');
+        setState(() {
+          _isReady = true;
+        });
+        // autoPlay가 true면 오디오 준비 후 바로 재생
+        if (widget.autoPlay) {
+          final ttsProvider = Provider.of<TtsProvider>(context, listen: false);
+          if (widget.article != null) {
+            ttsProvider.play(widget.article!, audioPlayer: _audioPlayer);
+          }
+          await _audioPlayer.play();
+        }
+        
+        // TtsProvider에 오디오 플레이어 등록 (자동 재생 방지)
+        final ttsProvider = Provider.of<TtsProvider>(context, listen: false);
+        if (widget.article != null) {
+          // 현재 기사가 이미 재생 중인지 확인
+          if (ttsProvider.isPlaying && ttsProvider.currentArticle?.id == widget.article!.id) {
+            // 이미 재생 중인 기사라면 아무것도 하지 않음 (백그라운드 재생 유지)
+            print('이미 재생 중인 기사: ${widget.article!.title} (백그라운드 재생 유지)');
+            // 오디오 플레이어 설정하지 않음
+          } else {
+            // 새 기사이거나 재생 중이 아닌 경우
+            if (!ttsProvider.isPlaying) {
+              ttsProvider.setArticle(widget.article!, audioPlayer: _audioPlayer);
+            }
+          }
+        }
+        
+        // 오디오 설정 완료 후 상태 동기화
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _syncAudioPlayerState();
+        });
+      } else {
+        print('오디오 URL이 비어있음');
+      }
 
       // Check if title needs scrolling animation
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _checkTitleAnimation();
       });
-    } catch (error) {
-      print('기사 데이터를 불러오는 중 오류가 발생했습니다: $error');
-      // Keep default title on error
+    } catch (e) {
+      print('오디오 API 에러: $e');
     }
   }
 
   void _checkTitleAnimation() {
-    // 글자 수가 9자 초과일 때 애니메이션 적용
-    if (articleTitle.length > 9) {
+    // 글자 수가 15자 초과일 때 애니메이션 적용 (더 긴 제목에서만)
+    if (articleTitle.length > 15) {
       setState(() {
         shouldAnimate = true;
       });
-      _titleAnimationController.repeat();
+      _titleAnimationController.forward(); // 한 번만 실행
+    } else {
+      setState(() {
+        shouldAnimate = false;
+      });
+      _titleAnimationController.stop();
     }
   }
 
-  void _togglePlayPause() {
-    setState(() {
-      isPlaying = !isPlaying;
+  @override
+  void initState() {
+    super.initState();
+    _audioPlayer = AudioPlayer();
+    _fetchAndSetAudio();
+
+    // Initialize title animation
+    _titleAnimationController = AnimationController(
+      duration: const Duration(seconds: 20), // 더 천천히 움직이도록 조정
+      vsync: this,
+    );
+
+    _titleAnimation = Tween<Offset>(
+      begin: const Offset(0, 0),
+      end: const Offset(-3.0, 0), // 텍스트가 완전히 지나가도록 더 많이 움직임
+    ).animate(CurvedAnimation(
+      parent: _titleAnimationController,
+      curve: Curves.linear, // 선형 움직임으로 변경
+    ));
+
+    // 한 번만 실행하되 긴 거리를 움직이도록
+    _titleAnimationController.forward();
+
+    // 현재 기사가 이미 재생 중인지 확인하고 동기화
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncAudioPlayerState();
+      _checkTitleAnimation();
     });
+  }
 
-    if (isPlaying) {
-      // Start playing
-      print('재생 시작');
+  void _syncAudioPlayerState() {
+    final ttsProvider = Provider.of<TtsProvider>(context, listen: false);
+    
+    // 현재 기사가 TtsProvider에서 재생 중인지 확인 (자동 재생 방지)
+    if (widget.article != null && 
+        ttsProvider.isPlaying && 
+        ttsProvider.currentArticle?.id == widget.article!.id) {
+      // 이미 재생 중인 기사라면 자동 재생하지 않고 상태만 확인
+      print('기존 재생 상태 확인: ${widget.article!.title} (자동 재생 안함)');
+      // 백그라운드에서 재생 중이므로 현재 오디오 플레이어는 정지 상태로 유지
+      if (_audioPlayer.playing) {
+        _audioPlayer.pause();
+      }
     } else {
-      // Pause playing
-      print('일시정지');
+      // 재생 중이 아니라면 오디오 플레이어도 정지 상태로 설정
+      if (_audioPlayer.playing) {
+        _audioPlayer.pause();
+      }
     }
   }
 
-  void _updateAudioProgress() {
-    if (_currentSeconds < _totalSeconds) {
-      setState(() {
-        _currentSeconds++;
-        audioProgress = _currentSeconds / _totalSeconds;
-        currentTime = _formatTime(_currentSeconds);
-      });
+  void _togglePlayPause() async {
+    if (!_isReady) return;
+    
+    final ttsProvider = Provider.of<TtsProvider>(context, listen: false);
+    
+    // 현재 재생 상태를 확인해서 토글
+    final playing = _audioPlayer.playing;
+    if (playing) {
+      // 일시정지
+      await _audioPlayer.pause();
+      ttsProvider.pause();
+      print('일시정지');
     } else {
-      // Audio finished
-      setState(() {
-        isPlaying = false;
-        _currentSeconds = 0;
-        audioProgress = 0.0;
-        currentTime = _formatTime(0);
-      });
+      // 재생 시작 - 다른 기사가 재생 중이면 자동으로 정지됨
+      if (widget.article != null) {
+        ttsProvider.play(widget.article!, audioPlayer: _audioPlayer);
+      }
+      await _audioPlayer.play();
+      print('재생 시작');
     }
   }
 
@@ -148,20 +210,32 @@ class _BriefingScreenState extends State<BriefingScreen>
     return '$minutes:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 
-  void _skipToPrevious() {
-    setState(() {
-      _currentSeconds = max(0, _currentSeconds - 10);
-      audioProgress = _currentSeconds / _totalSeconds;
-      currentTime = _formatTime(_currentSeconds);
-    });
+  void _skipToPrevious() async {
+    if (!_isReady) return;
+    final currentPosition = await _audioPlayer.position;
+    final newPosition = currentPosition.inMilliseconds > 10000 
+        ? currentPosition - const Duration(seconds: 10)
+        : Duration.zero;
+    await _audioPlayer.seek(newPosition);
   }
 
-  void _skipToNext() {
-    setState(() {
-      _currentSeconds = min(_totalSeconds, _currentSeconds + 10);
-      audioProgress = _currentSeconds / _totalSeconds;
-      currentTime = _formatTime(_currentSeconds);
-    });
+  void _skipToNext() async {
+    if (!_isReady) return;
+    final currentPosition = await _audioPlayer.position;
+    final duration = await _audioPlayer.duration;
+    if (duration != null) {
+      final newPosition = currentPosition.inMilliseconds + 10000 < duration.inMilliseconds
+          ? currentPosition + const Duration(seconds: 10)
+          : duration;
+      await _audioPlayer.seek(newPosition);
+    }
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    _titleAnimationController.dispose();
+    super.dispose();
   }
 
   @override
@@ -169,12 +243,6 @@ class _BriefingScreenState extends State<BriefingScreen>
     return Scaffold(
       backgroundColor: Colors.white,
       body: Container(
-        // width: 393,
-        // height: 852,
-        // 검은 테두리 제거
-        // decoration: BoxDecoration(
-        //   border: Border.all(color: Colors.black),
-        // ),
         child: Stack(
           children: [
             // Main Content - Fixed layout for iPhone 15
@@ -197,48 +265,28 @@ class _BriefingScreenState extends State<BriefingScreen>
                 // Main Article Image - Smaller square shape
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // 카테고리명
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0565FF),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Text(
-                          '경제',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Pretendard',
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // 기존 이미지
-                      Expanded(
-                        child: Container(
-                          width: 320,
-                          height: 280,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.asset(
+                  child: Container(
+                    width: 320,
+                    height: 280,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: _articleData != null && _articleData!['thumbnail_image_url'] != null
+                          ? Image.network(
+                              _articleData!['thumbnail_image_url'],
+                              fit: BoxFit.cover,
+                              width: 320,
+                              height: 280,
+                            )
+                          : Image.asset(
                               'assets/a_image/SKhynix.jpg',
                               fit: BoxFit.cover,
                               width: 320,
                               height: 280,
                             ),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
                 // 이미지 아래에 제목+출처+아이콘 Row 추가 (뮤직앱 스타일)
@@ -248,58 +296,85 @@ class _BriefingScreenState extends State<BriefingScreen>
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // 제목+출처
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              articleTitle,
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: 'Pretendard',
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              articleSource,
-                              style: const TextStyle(
-                                color: Color(0xFF0565FF),
-                                fontSize: 16,
-                                fontFamily: 'Pretendard',
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // 아이콘
-                      Row(
+                      // 제목+출처 - 버튼과 겹치지 않도록 공간 확보
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Image.asset(
-                            'assets/a_image/star.png',
-                            width: 28,
-                            height: 28,
+                          // 제목만 애니메이션 적용 - 버튼과 겹치지 않도록 제한
+                          Container(
+                            height: 32, // 한 줄 높이로 제한
+                            width: MediaQuery.of(context).size.width * 0.35, // 화면 너비의 35%만 사용 (더 좁게)
+                            child: shouldAnimate
+                                ? SlideTransition(
+                                    position: _titleAnimation,
+                                    child: Text(
+                                      '$articleTitle  $articleTitle', // 텍스트를 두 번 반복
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 26,
+                                        fontWeight: FontWeight.w500,
+                                        fontFamily: 'Pretendard',
+                                      ),
+                                      maxLines: 1, // 한 줄로 제한
+                                      overflow: TextOverflow.visible, // 넘치는 텍스트도 보이도록
+                                      softWrap: false, // 줄바꿈 방지
+                                    ),
+                                  )
+                                : Text(
+                                    articleTitle,
+                                    style: const TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w500,
+                                      fontFamily: 'Pretendard',
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                           ),
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const BriChatBotScreen(),
-                                ),
-                              );
-                            },
-                            child: Image.asset(
-                              'assets/a_image/chatbot.webp',
-                              width: 36,
-                              height: 36,
+                          const SizedBox(height: 10), // 기자 이름을 아래로 내림
+                          // 출처는 애니메이션 없이 고정
+                          Text(
+                            articleSource,
+                            style: const TextStyle(
+                              color: Color(0xFF0565FF),
+                              fontSize: 20,
+                              fontFamily: 'Pretendard',
+                              fontWeight: FontWeight.w500,
                             ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(), // 남은 공간을 모두 사용하여 아이콘을 오른쪽으로 밀어냄
+                      // 아이콘
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          const SizedBox(height: 50), // 아이콘을 아래로 내림
+                          Row(
+                            children: [
+                              Image.asset(
+                                'assets/a_image/star.png',
+                                width: 28,
+                                height: 28,
+                              ),
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const BriChatBotScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Image.asset(
+                                  'assets/a_image/chatbot.webp',
+                                  width: 36,
+                                  height: 36,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -307,65 +382,89 @@ class _BriefingScreenState extends State<BriefingScreen>
                   ),
                 ),
 
-                const SizedBox(height: 16), // Reduced spacing
+                const SizedBox(height: 4), // Reduced spacing
 
                 // Audio Progress - Animated like music app
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 28),
                   child: Column(
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            currentTime, // Dynamic current time
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontSize: 12,
-                              fontFamily: 'Pretendard',
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                          Text(
-                            totalTime, // Dynamic total time
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontSize: 12,
-                              fontFamily: 'Pretendard',
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6), // Reduced spacing
-                      Stack(
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            height: 6, // Slightly smaller
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFD9D9D9),
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            width: MediaQuery.of(context).size.width *
-                                audioProgress *
-                                0.84, // 0.84 = (393-56)/393
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF555555),
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                        ],
+                      StreamBuilder<Duration?>(
+                        stream: _audioPlayer.durationStream,
+                        builder: (context, durationSnapshot) {
+                          final duration = durationSnapshot.data ?? Duration.zero;
+                          return StreamBuilder<Duration>(
+                            stream: _audioPlayer.positionStream,
+                            builder: (context, positionSnapshot) {
+                              final position = positionSnapshot.data ?? Duration.zero;
+                              
+                              String formatDuration(Duration d) {
+                                String twoDigits(int n) => n.toString().padLeft(2, '0');
+                                return '${twoDigits(d.inMinutes)}:${twoDigits(d.inSeconds % 60)}';
+                              }
+                              
+                              return Column(
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        formatDuration(position),
+                                        style: const TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 12,
+                                          fontFamily: 'Pretendard',
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                      Text(
+                                        formatDuration(duration),
+                                        style: const TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 12,
+                                          fontFamily: 'Pretendard',
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Stack(
+                                    children: [
+                                      Container(
+                                        width: double.infinity,
+                                        height: 6,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFD9D9D9),
+                                          borderRadius: BorderRadius.circular(30),
+                                        ),
+                                      ),
+                                      AnimatedContainer(
+                                        duration: const Duration(milliseconds: 100),
+                                        width: duration.inMilliseconds > 0
+                                            ? MediaQuery.of(context).size.width *
+                                                (position.inMilliseconds / duration.inMilliseconds) *
+                                                0.84
+                                            : 0,
+                                        height: 6,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF555555),
+                                          borderRadius: BorderRadius.circular(30),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 16), // Reduced spacing
+                const SizedBox(height: 8), // Reduced spacing
 
                 // Audio Controls - Custom styled like the image
                 Row(
@@ -391,13 +490,22 @@ class _BriefingScreenState extends State<BriefingScreen>
                       child: SizedBox(
                         width: 44, // Slightly smaller
                         height: 44,
-                        child: isPlaying
-                            ? CustomPaint(
-                                painter: PauseIconPainter(),
-                              )
-                            : CustomPaint(
-                                painter: PlayIconPainter(),
-                              ),
+                        child: Consumer<TtsProvider>(
+                          builder: (context, ttsProvider, child) {
+                            // 현재 기사가 재생 중인지 확인
+                            final isCurrentArticlePlaying = widget.article != null && 
+                                ttsProvider.isPlaying && 
+                                ttsProvider.currentArticle?.id == widget.article!.id;
+                            
+                            return isCurrentArticlePlaying
+                                ? CustomPaint(
+                                    painter: PauseIconPainter(),
+                                  )
+                                : CustomPaint(
+                                    painter: PlayIconPainter(),
+                                  );
+                          },
+                        ),
                       ),
                     ),
 
@@ -428,16 +536,16 @@ class _BriefingScreenState extends State<BriefingScreen>
               top: 96,
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 9), // 패딩을 살짝 키움
+                    horizontal: 20, vertical: 7), // 패딩을 줄임
                 decoration: BoxDecoration(
                   color: const Color(0xFF0565FF),
                   borderRadius: BorderRadius.circular(40),
                 ),
-                child: const Text(
-                  '경제',
-                  style: TextStyle(
+                child: Text(
+                  _articleData?['category_name'] ?? '경제',
+                  style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 18, // 16에서 18로 키움
+                    fontSize: 14, // 18에서 14로 줄임
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Pretendard',
                   ),
@@ -447,7 +555,7 @@ class _BriefingScreenState extends State<BriefingScreen>
 
             // Bottom Navigation using assets
             Positioned(
-              bottom: 40, // 20에서 40으로 올려서 버튼을 위로 이동
+              bottom: 56, // 기존 40에서 20으로 줄여 살짝 위로 올림
               left: 0,
               right: 0,
               child: Container(
@@ -458,13 +566,13 @@ class _BriefingScreenState extends State<BriefingScreen>
                   children: [
                     // List Music Icon from assets
                     GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const BriPlaylistScreen(),
-                          ),
-                        );
-                      },
+                                                  onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const BriPlaylistScreen(),
+                                ),
+                              );
+                            },
                       child: Image.asset(
                         'assets/a_image/list-music.png',
                         width: 28,
@@ -474,36 +582,25 @@ class _BriefingScreenState extends State<BriefingScreen>
                     // Caption Icon from assets
                     GestureDetector(
                       onTap: () {
+                        final summaryRaw = _articleData?['summary_text'];
+                        List<String> scriptLines;
+                        if (summaryRaw is String && summaryRaw.isNotEmpty) {
+                          scriptLines = summaryRaw
+                              .replaceAll('\n', ' ')
+                              .split(RegExp(r'(?<=[.!?])\s+'))
+                              .map((e) => e.trim())
+                              .where((line) => line.isNotEmpty)
+                              .toList();
+                        } else {
+                          scriptLines = ['요약이 없습니다.'];
+                        }
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => BriCaptionScreen(
                               imageUrl: articleImageUrl,
                               title: articleTitle,
                               reporter: articleSource,
-                              category: '경제',
-                              scriptLines: const [
-                                'SK하이닉스는 올해 상반기에',
-                                '구성원들에게 월 기본급의',
-                                "150%를 '생산성 격려금'으로",
-                                '지급할 예정이다.',
-                                '',
-                                '이는 고대역폭 메모리 시장 1위를',
-                                '차지하며 역대급 실적을 달성한 결과이다.',
-                                '',
-                                'PI는 영업이익률에 따라 지급되며,',
-                                'SK하이닉스는 1분기에 42%의',
-                                '영업이익률을 기록했다.',
-                                '',
-                                '2분기 실적은 매출 20조',
-                                '6천164억 원,',
-                                '영업이익 9조 222억 원으로 예상되며,',
-                                '하반기에도 높은 실적이 예상되어',
-                                '성과급이 상승할 것으로 전망된다.',
-                                '',
-                                '증권가는 SK하이닉스의 연간',
-                                '영업이익이 37조 원에 달할 것으로',
-                                '예상하고 있다.',
-                              ],
+                              scriptLines: scriptLines,
                             ),
                           ),
                         );
@@ -514,25 +611,11 @@ class _BriefingScreenState extends State<BriefingScreen>
                         height: 28,
                       ),
                     ),
-                    // Newspaper Icon with text from assets
-                    Column(
-                      children: [
-                        Image.asset(
-                          'assets/a_image/newspaper.png',
-                          width: 28,
-                          height: 28,
-                        ),
-                        const SizedBox(height: 6), // Reduced spacing
-                        const Text(
-                          '기사 원문보기',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 12, // Slightly smaller
-                            fontFamily: 'Pretendard',
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
+                    // Newspaper Icon from assets
+                    Image.asset(
+                      'assets/a_image/newspaper.png',
+                      width: 28,
+                      height: 28,
                     ),
                   ],
                 ),
