@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'start_screen.dart';
+import '../home/home_screen.dart';
 import '../../services/auth_service.dart';
 import '../../models/auth_models.dart';
 import 'signup/signup_email_screen.dart';
@@ -126,11 +127,10 @@ class _LoginScreenState extends State<LoginScreen> {
       print('로그인 성공: ${authResponse.email}');
       print('토큰: ${authResponse.accessToken}');
 
-      // 로그인 성공 시 다음 화면으로 이동
-      // TODO: 실제 화면으로 변경
+      // 로그인 성공 시 홈 화면으로 이동
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const StartScreen()),
+        MaterialPageRoute(builder: (context) => const CustomHomeScreen()),
       );
     } catch (e) {
       // 에러 처리
