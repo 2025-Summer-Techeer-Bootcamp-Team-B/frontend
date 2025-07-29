@@ -14,11 +14,8 @@ class ApiService {
   String? _refreshToken; // 리프레시 토큰 추가
 
   // TODO: 백엔드 배포 후 실제 URL로 변경
-<<<<<<< HEAD
-  static const String baseUrl = 'http://127.0.0.1:8000'; // 로컬 백엔드 서버
-=======
-  static const String baseUrl = 'http://yosm-n.kro.kr'; // 실제 백엔드 서버
->>>>>>> origin/clean-main
+  //static const String baseUrl = 'http://127.0.0.1:8000'; // 로컬 백엔드 서버
+  static const String baseUrl = 'http://yosm-n.kro.kr:8000'; // 실제 백엔드 서버
 
   Future<void> initialize() async {
     // 저장된 토큰들 불러오기
@@ -298,7 +295,7 @@ class ApiService {
     }
   }
 
-<<<<<<< HEAD
+
   // 최신 기사 목록 조회 (recent)
   Future<List<ArticleModel>> fetchRecentArticles() async {
     try {
@@ -317,7 +314,11 @@ class ApiService {
         queryParameters: {'category_name': categoryName});
       final List<dynamic> data = response.data;
       return data.map((json) => ArticleModel.fromJson(json)).toList();
-=======
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   // 사용자 관심 키워드 업데이트 (PUT - 기존 데이터 수정)
   Future<UserKeywords> updateUserKeywords(List<String> keywords) async {
     try {
@@ -327,7 +328,6 @@ class ApiService {
 
       final response = await put(ApiEndpoints.userKeyword, data: requestData);
       return UserKeywords.fromJson(response.data);
->>>>>>> origin/clean-main
     } catch (e) {
       throw _handleError(e);
     }

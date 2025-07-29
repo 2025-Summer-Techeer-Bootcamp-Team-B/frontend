@@ -23,6 +23,7 @@ import 'screens/test_api_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'providers/tts_provider.dart';
 import 'screens/auth/onboarding.dart';
+import 'screens/auth/start_screen.dart';
 // import 'screens/home/dfs.dart';
 // import 'screens/favorites/favorites_screen_toggle_off.dart';
 
@@ -40,6 +41,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => TtsProvider()),
+        ChangeNotifierProvider(create: (_) => UserVoiceTypeProvider()),
         // 기존 Provider들...
       ],
       child: MaterialApp(
@@ -49,7 +51,7 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.blue,
           fontFamily: 'Pretendard',
         ),
-        home: const OnboardingScreen(), // 스플래시 화면으로 시작
+        home: const StartScreen(), // 온보딩 없이 바로 시작화면으로 진입
       ),
     );
   }

@@ -10,6 +10,7 @@ import 'bri_caption.dart';
 import 'bri_chatbot.dart';
 import 'package:provider/provider.dart';
 import '../../providers/tts_provider.dart';
+import '../../services/api_service.dart';
 
 class BriefingScreen extends StatefulWidget {
   final ArticleModel? article;
@@ -42,30 +43,19 @@ class _BriefingScreenState extends State<BriefingScreen>
     if (articleId == null) return;
     print('기사 ID: $articleId');
     try {
-      // 저장된 토큰 가져오기
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
-      
-      if (token == null) {
-        print('인증 토큰이 없습니다');
-        return;
-      }
-
-      final dio = Dio();
-      // 인증 토큰을 헤더에 추가
-      dio.options.headers['Authorization'] = 'Bearer $token';
-      
-      final response = await dio.get('http://127.0.0.1:8000/api/v1/articles/$articleId');
+      // ApiService 인스턴스 사용
+      final apiService = ApiService();
+      // ApiService가 초기화되어 있지 않으면 초기화
+      await apiService.initialize();
+      final response = await apiService.get('/api/v1/articles/$articleId');
       final data = response.data;
       print('API 응답: $data');
-      
       setState(() {
         _articleData = data;
         articleTitle = data['title'] ?? '기사 제목';
         articleSource = data['author'] ?? '기사 출처';
         articleImageUrl = data['thumbnail_image_url'] ?? 'assets/a_image/burn_airplane.png';
       });
-      
       final url = data['female_audio_url'];
       _audioUrl = url;
       if (url != null && url.isNotEmpty) {
@@ -82,14 +72,13 @@ class _BriefingScreenState extends State<BriefingScreen>
           }
           await _audioPlayer.play();
         }
-        
         // TtsProvider에 오디오 플레이어 등록 (자동 재생 방지)
         final ttsProvider = Provider.of<TtsProvider>(context, listen: false);
         if (widget.article != null) {
           // 현재 기사가 이미 재생 중인지 확인
           if (ttsProvider.isPlaying && ttsProvider.currentArticle?.id == widget.article!.id) {
             // 이미 재생 중인 기사라면 아무것도 하지 않음 (백그라운드 재생 유지)
-            print('이미 재생 중인 기사: ${widget.article!.title} (백그라운드 재생 유지)');
+            print('이미 재생 중인 기사:  [${widget.article!.title} (백그라운드 재생 유지)');
             // 오디오 플레이어 설정하지 않음
           } else {
             // 새 기사이거나 재생 중이 아닌 경우
@@ -98,7 +87,6 @@ class _BriefingScreenState extends State<BriefingScreen>
             }
           }
         }
-        
         // 오디오 설정 완료 후 상태 동기화
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _syncAudioPlayerState();
@@ -106,7 +94,6 @@ class _BriefingScreenState extends State<BriefingScreen>
       } else {
         print('오디오 URL이 비어있음');
       }
-
       // Check if title needs scrolling animation
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _checkTitleAnimation();

@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 import 'start_screen.dart';
 import '../../services/auth_service.dart';
 import '../../models/auth_models.dart';
-<<<<<<< HEAD
 import '../home/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-=======
 import 'signup/signup_email_screen.dart';
->>>>>>> origin/clean-main
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
