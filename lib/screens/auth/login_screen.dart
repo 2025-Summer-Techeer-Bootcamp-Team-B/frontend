@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'start_screen.dart';
 import '../../services/auth_service.dart';
 import '../../models/auth_models.dart';
+import 'signup/signup_email_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -156,7 +157,10 @@ class _LoginScreenState extends State<LoginScreen> {
   void handleSignup() {
     // 회원가입 페이지로 이동
     print('회원가입 페이지로 이동');
-    // Navigator.push(context, MaterialPageRoute(builder: (context) => SignupEmailScreen()));
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SignupEmailScreen()),
+    );
   }
 
   void togglePasswordVisibility() {

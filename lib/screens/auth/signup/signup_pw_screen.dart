@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import '../start_screen.dart';
 import 'signup_email_screen.dart';
+import '../interest/media_select.dart';
+import '../../../services/auth_service.dart';
+import '../../../services/api_service.dart';
+import '../../../models/auth_models.dart';
 
 class SignupPwScreen extends StatefulWidget {
-  const SignupPwScreen({super.key});
+  final String? email;
+  
+  const SignupPwScreen({
+    super.key,
+    this.email,
+  });
 
   @override
   State<SignupPwScreen> createState() => _SignupPwScreenState();
@@ -16,9 +25,11 @@ class _SignupPwScreenState extends State<SignupPwScreen> {
   bool inputFocused = false;
   bool passwordFocused = false;
   bool confirmPasswordFocused = false;
+  bool isLoading = false;
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
+  final AuthService _authService = AuthService();
 
   void handleKeyPress(String key) {
     setState(() {
@@ -109,9 +120,61 @@ class _SignupPwScreenState extends State<SignupPwScreen> {
     );
   }
 
-  void handleNext() {
-    // 다음 단계로 진행
-    print('다음: $password, $confirmPassword');
+  Future<void> handleNext() async {
+    if (!canProceed || isLoading) return;
+    
+    print('받은 이메일: ${widget.email}'); // 디버깅용
+    
+    if (widget.email == null || widget.email!.isEmpty) {
+      print('이메일이 없습니다!');
+      return;
+    }
+    
+    setState(() {
+      isLoading = true;
+    });
+    
+    try {
+      // 회원가입 API 호출
+      final authResponse = await _authService.register(
+        email: widget.email!,
+        password: password,
+      );
+      
+      print('회원가입 성공: ${authResponse.email}');
+      print('토큰: ${authResponse.accessToken}');
+      
+      // 토큰이 제대로 저장되었는지 확인
+      final apiService = ApiService();
+      print('토큰 저장 확인: ${apiService.hasAccessToken}');
+      print('토큰 값: ${apiService.accessTokenValue?.substring(0, 20)}...');
+      
+      // 회원가입 성공 시 언론사 선택 화면으로 이동
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const MediaSelectPage()),
+        );
+      }
+    } catch (e) {
+      print('회원가입 실패: $e');
+      
+      // 에러 메시지 표시
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('회원가입에 실패했습니다: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
   }
 
   bool get isPasswordValid => password.length >= 8;
@@ -301,16 +364,16 @@ class _SignupPwScreenState extends State<SignupPwScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           child: GestureDetector(
-                            onTap: canProceed ? handleNext : null,
+                            onTap: (canProceed && !isLoading) ? handleNext : null,
                             child: Container(
                               width: 138,
                               height: 62,
                               decoration: BoxDecoration(
-                                color: canProceed
+                                color: (canProceed && !isLoading)
                                     ? const Color(0xFF0565FF)
                                     : const Color(0xFF0565FF).withOpacity(0.5),
                                 borderRadius: BorderRadius.circular(30),
-                                boxShadow: canProceed
+                                boxShadow: (canProceed && !isLoading)
                                     ? [
                                         BoxShadow(
                                           color: const Color(0xFF0565FF)
@@ -321,16 +384,25 @@ class _SignupPwScreenState extends State<SignupPwScreen> {
                                       ]
                                     : null,
                               ),
-                              child: const Center(
-                                child: Text(
-                                  '다음',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'Pretendard',
-                                  ),
-                                ),
+                              child: Center(
+                                child: isLoading
+                                    ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Text(
+                                        '다음',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Pretendard',
+                                        ),
+                                      ),
                               ),
                             ),
                           ),

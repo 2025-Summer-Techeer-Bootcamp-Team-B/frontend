@@ -18,11 +18,11 @@ class LoginRequest {
   }
 }
 
-class SignupRequest {
+class RegisterRequest {
   final String email;
   final String password;
 
-  SignupRequest({
+  RegisterRequest({
     required this.email,
     required this.password,
   });
@@ -67,7 +67,7 @@ class RefreshTokenRequest {
 
   Map<String, dynamic> toJson() {
     return {
-      'refreshToken': refreshToken,
+      'refresh_token': refreshToken, // 백엔드 API 스펙에 맞게 수정
     };
   }
 }

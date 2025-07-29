@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../start_screen.dart';
 import 'signup_pw_screen.dart';
+import '../../../services/auth_service.dart';
 
 class SignupEmailScreen extends StatefulWidget {
   const SignupEmailScreen({super.key});
@@ -13,7 +14,17 @@ class _SignupEmailScreenState extends State<SignupEmailScreen> {
   String email = '';
   bool showKeyboard = false;
   bool inputFocused = false;
+  bool isCheckingEmail = false;
+  bool emailExists = false;
+  bool emailFormatError = false;
   final TextEditingController _emailController = TextEditingController();
+  final AuthService _authService = AuthService();
+
+  // 이메일 형식 검증 함수
+  bool isValidEmail(String email) {
+    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    return emailRegex.hasMatch(email);
+  }
 
   void handleKeyPress(String key) {
     setState(() {
@@ -68,10 +79,41 @@ class _SignupEmailScreenState extends State<SignupEmailScreen> {
     );
   }
 
+  Future<void> checkEmailExists() async {
+    if (email.trim().isEmpty) {
+      setState(() {
+        emailExists = false;
+      });
+      return;
+    }
+
+    setState(() {
+      isCheckingEmail = true;
+    });
+
+    try {
+      final exists = await _authService.checkEmailDuplicate(email.trim());
+      setState(() {
+        emailExists = exists;
+        isCheckingEmail = false;
+      });
+    } catch (e) {
+      print('이메일 중복 검사 실패: $e');
+      setState(() {
+        isCheckingEmail = false;
+      });
+    }
+  }
+
   void handleNext() {
+    if (emailFormatError || emailExists == true) {
+      // 이메일 형식이 잘못되거나 이미 존재하면 다음 화면으로 이동하지 않음
+      return;
+    }
+    
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const SignupPwScreen()),
+      MaterialPageRoute(builder: (context) => SignupPwScreen(email: email)),
     );
   }
 
@@ -148,59 +190,170 @@ class _SignupEmailScreenState extends State<SignupEmailScreen> {
                           ),
                         ),
 
-                        // Email Input
+                        // Email Input with Duplicate Check Button
                         Padding(
                           padding: const EdgeInsets.only(bottom: 32),
-                          child: GestureDetector(
-                            onTap: handleInputFocus,
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                border: Border(
-                                  bottom: BorderSide(
-                                    color: Color(0xFFD1D5DB),
-                                    width: 1,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: handleInputFocus,
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      border: Border(
+                                        bottom: BorderSide(
+                                          color: Color(0xFFD1D5DB),
+                                          width: 1,
+                                        ),
+                                      ),
+                                    ),
+                                    child: TextField(
+                                      controller: _emailController,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          email = value;
+                                          emailExists = false; // 입력이 변경되면 중복 상태 초기화
+                                          emailFormatError = false; // 입력이 변경되면 형식 오류 상태 초기화
+                                        });
+                                      },
+                                      onEditingComplete: () {
+                                        // 입력 완료 시 형식 검사만 수행
+                                        if (email.trim().isNotEmpty) {
+                                          if (!isValidEmail(email.trim())) {
+                                            setState(() {
+                                              emailFormatError = true;
+                                            });
+                                            return;
+                                          }
+                                          // 중복 검사는 버튼으로 수동 실행
+                                          setState(() {
+                                            emailFormatError = false;
+                                            emailExists = false; // 이전 중복 검사 결과 초기화
+                                          });
+                                        }
+                                      },
+                                      onTap: handleInputFocus,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.black,
+                                        fontFamily: 'Pretendard',
+                                      ),
+                                      decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.only(bottom: 8),
+                                      ),
+                                      cursorColor: inputFocused
+                                          ? const Color(0xFF2563EB)
+                                          : Colors.transparent,
+                                    ),
                                   ),
                                 ),
                               ),
-                              child: TextField(
-                                controller: _emailController,
-                                onChanged: (value) {
-                                  setState(() {
-                                    email = value;
-                                  });
-                                },
-                                onTap: handleInputFocus,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.black,
-                                  fontFamily: 'Pretendard',
+                              const SizedBox(width: 12),
+                              // 중복 확인 버튼
+                              if (email.trim().isNotEmpty && !emailFormatError && !emailExists && !isCheckingEmail)
+                                GestureDetector(
+                                  onTap: checkEmailExists,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black,
+                                      borderRadius: BorderRadius.circular(6),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.25),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 1),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Text(
+                                      '중복확인',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Pretendard',
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.only(bottom: 8),
+                            ],
+                          ),
+                        ),
+
+                        // 이메일 중복 검사 결과 표시
+                        if (isCheckingEmail)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0565FF)),
+                                  ),
                                 ),
-                                cursorColor: inputFocused
-                                    ? const Color(0xFF2563EB)
-                                    : Colors.transparent,
+                                SizedBox(width: 8),
+                                Text(
+                                  '이메일 중복 확인 중...',
+                                  style: TextStyle(
+                                    color: Color(0xFF0565FF),
+                                    fontSize: 14,
+                                    fontFamily: 'Pretendard',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                        if (emailExists)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 8),
+                            child: Text(
+                              '이미 존재하는 이메일입니다.',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Pretendard',
                               ),
                             ),
                           ),
-                        ),
+
+                        if (emailFormatError)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 8),
+                            child: Text(
+                              '올바른 이메일 형식이 아닙니다.',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Pretendard',
+                              ),
+                            ),
+                          ),
+
+
 
                         // Next Button
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           child: GestureDetector(
-                            onTap: email.trim().isNotEmpty ? handleNext : null,
+                            onTap: (email.trim().isNotEmpty && !emailFormatError && (emailExists == false || emailExists == null)) ? handleNext : null,
                             child: Container(
                               width: 120,
                               height: 48,
                               decoration: BoxDecoration(
-                                color: email.trim().isNotEmpty
+                                color: (email.trim().isNotEmpty && !emailFormatError && (emailExists == false || emailExists == null))
                                     ? const Color(0xFF0565FF)
                                     : const Color(0xFF0565FF).withOpacity(0.5),
                                 borderRadius: BorderRadius.circular(24),
-                                boxShadow: email.trim().isNotEmpty
+                                boxShadow: (email.trim().isNotEmpty && !emailFormatError && (emailExists == false || emailExists == null))
                                     ? [
                                         BoxShadow(
                                           color: const Color(0xFF0565FF)

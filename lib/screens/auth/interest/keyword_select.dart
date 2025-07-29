@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../services/api_service.dart';
+import '../../../models/common_models.dart';
+import 'voice_select.dart';
 // import '../../home/home_screen.dart';
 
 class KeywordSelectPage extends StatefulWidget {
@@ -253,7 +255,9 @@ class _KeywordSelectPageState extends State<KeywordSelectPage> {
                             print('선택된 카테고리: ${widget.selectedCategories}');
                             print('선택된 키워드: $keywords');
                             
-                            // API 서비스 인스턴스 가져오기
+                            print('=== 음성 선택 화면으로 이동 시작 ===');
+                            
+                            // 실제 API 호출
                             final apiService = ApiService();
                             
                             // 선택된 카테고리 정보를 API로 업데이트 (PUT 메서드 사용)
@@ -264,7 +268,9 @@ class _KeywordSelectPageState extends State<KeywordSelectPage> {
                             final updatedPress = await apiService.updateUserPress(widget.selectedMedia);
                             print('업데이트된 언론사: ${updatedPress.pressList}');
                             
-                            // TODO: 선택된 키워드도 저장하는 API 호출 추가
+                            // 선택된 키워드 정보를 API로 업데이트 (PUT 메서드 사용)
+                            final updatedKeywords = await apiService.updateUserKeywords(keywords);
+                            print('업데이트된 키워드: ${updatedKeywords.keywords}');
                             
                             // 성공 메시지 표시
                             if (context.mounted) {
@@ -276,13 +282,17 @@ class _KeywordSelectPageState extends State<KeywordSelectPage> {
                               );
                             }
                             
-                            // 완료 처리 - 홈 화면으로 이동 (예시)
-                            // Navigator.of(context).pushAndRemoveUntil(
-                            //   MaterialPageRoute(
-                            //     builder: (context) => const HomeScreen(),
-                            //   ),
-                            //   (route) => false, // 모든 이전 화면 제거
-                            // );
+                            // 완료 처리 - 음성 선택 화면으로 이동
+                            print('VoiceSelectScreen으로 이동 시도...');
+                            if (context.mounted) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const VoiceSelectScreen()),
+                              );
+                              print('VoiceSelectScreen으로 이동 완료!');
+                            } else {
+                              print('context가 mounted되지 않음');
+                            }
                           } catch (e) {
                             print('카테고리 저장 실패: $e');
                             if (context.mounted) {

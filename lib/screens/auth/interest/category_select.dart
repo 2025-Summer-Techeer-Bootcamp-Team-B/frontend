@@ -33,27 +33,13 @@ class _CategorySelectPageState extends State<CategorySelectPage> {
 
   // 저장된 카테고리 정보 불러오기
   Future<void> _loadSavedCategories() async {
-    try {
-      final apiService = ApiService();
-      final savedCategories = await apiService.getUserCategories();
-      
-      // 저장된 카테고리와 현재 사용 가능한 카테고리를 비교하여 선택 상태 설정
-      setState(() {
-        for (int i = 0; i < availableCategories.length; i++) {
-          if (savedCategories.categories.contains(availableCategories[i])) {
-            selected.add(i);
-          }
-        }
-      });
-    } catch (e) {
-      print('저장된 카테고리 불러오기 실패: $e');
-      // 오류가 발생해도 계속 진행
-    }
+    // 회원가입 과정에서는 API 호출하지 않음
+    print('회원가입 과정: 저장된 카테고리 정보 불러오기 건너뜀');
   }
 
   // 카테고리 선택 변경 시 API로 업데이트
   Future<void> _updateCategories() async {
-    // 최소 3개 이상 선택되었을 때만 API 호출
+    // 최소 3개 이상 선택되었을 때만 처리
     List<String> selectedCategories = selected
         .map((index) => availableCategories[index])
         .toList();
@@ -64,39 +50,26 @@ class _CategorySelectPageState extends State<CategorySelectPage> {
       isUpdating = true;
     });
     
-    try {
-      final apiService = ApiService();
-      final updatedCategories = await apiService.updateUserCategories(selectedCategories);
-      print('카테고리 업데이트 성공: ${updatedCategories.categories}');
-      
-      // 성공 메시지 표시
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('카테고리가 업데이트되었습니다.'),
-            backgroundColor: Color(0xFF0565FF),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      print('카테고리 업데이트 실패: $e');
-      // 오류 메시지 표시
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('카테고리 업데이트 실패: $e'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          isUpdating = false;
-        });
-      }
+    // 회원가입 과정에서는 API 호출하지 않고 로컬에서만 처리
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    print('카테고리 선택 완료: $selectedCategories');
+    
+    // 성공 메시지 표시
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('카테고리가 선택되었습니다.'),
+          backgroundColor: Color(0xFF0565FF),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+    
+    if (mounted) {
+      setState(() {
+        isUpdating = false;
+      });
     }
   }
 
@@ -110,12 +83,14 @@ class _CategorySelectPageState extends State<CategorySelectPage> {
       for (int j = 0; j < itemsPerRow; j++) {
         int idx = i + j;
         if (idx >= availableCategories.length) {
-          // 빈 공간 추가
-          rowItems.add(const SizedBox(width: 96, height: 104));
+          // 마지막 행이 아니면 빈 공간 추가
+          if (i + itemsPerRow < availableCategories.length) {
+            rowItems.add(const SizedBox(width: 96, height: 104));
+          }
         } else {
           final category = availableCategories[idx];
           final isSelected = selected.contains(idx);
-          final iconSize = category.length > 5 ? 52.0 : 61.0;
+          final iconSize = 52.0; // 모든 아이콘을 동일한 크기로 설정
           
           rowItems.add(
             Padding(
@@ -189,7 +164,11 @@ class _CategorySelectPageState extends State<CategorySelectPage> {
         Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: rowItems.length == 1 
+                ? MainAxisAlignment.center  // 마지막 행에 아이템이 1개면 중앙 정렬
+                : rowItems.length == 2
+                    ? MainAxisAlignment.spaceEvenly  // 2개면 균등 분배
+                    : MainAxisAlignment.center,
             children: rowItems,
           ),
         ),

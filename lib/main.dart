@@ -21,6 +21,7 @@ import 'widgets/user_keyword_example.dart';
 import 'screens/auth/interest/voice_select.dart';
 import 'screens/test_api_screen.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/auth/onboarding.dart';
 // import 'screens/home/dfs.dart';
 // import 'screens/favorites/favorites_screen_toggle_off.dart';
 
@@ -28,7 +29,7 @@ void main() {
   // API 서비스 초기화
   ApiService().initialize();
 
-  runApp(const MyApp()); 
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -49,7 +50,7 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.blue,
           fontFamily: 'Pretendard',
         ),
-        home: const LoginScreen(), // 로그인 화면으로 시작
+        home: const OnboardingScreen(), // 스플래시 화면으로 시작
       ),
     );
   }
