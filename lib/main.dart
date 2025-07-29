@@ -42,6 +42,8 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => TtsProvider()),
         ChangeNotifierProvider(create: (_) => UserVoiceTypeProvider()),
+        ChangeNotifierProvider(create: (_) => UserKeywordProvider()),
+        ChangeNotifierProvider(create: (_) => UserPreferencesProvider()),
         // 기존 Provider들...
       ],
       child: MaterialApp(
