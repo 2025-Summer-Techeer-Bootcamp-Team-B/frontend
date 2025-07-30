@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'screens/favorites/fav_s_t_off.dart';
-import 'screens/favorites/favorites_screen_toggle_on.dart';
+import 'screens/favorites/fav_s_t_on.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/briefing/bri_playlist.dart';
 import 'screens/briefing/briefing_screen.dart';
@@ -30,6 +30,11 @@ import 'screens/auth/start_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ApiService().initialize();
+  
+  // UserPreferencesProvider 초기화
+  final userPreferencesProvider = UserPreferencesProvider();
+  await userPreferencesProvider.loadUserPreferences();
+  
   runApp(const MyApp());
 }
 
@@ -42,6 +47,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => TtsProvider()),
         ChangeNotifierProvider(create: (_) => UserVoiceTypeProvider()),
+        ChangeNotifierProvider(create: (_) => UserPreferencesProvider()),
         // 기존 Provider들...
       ],
       child: MaterialApp(

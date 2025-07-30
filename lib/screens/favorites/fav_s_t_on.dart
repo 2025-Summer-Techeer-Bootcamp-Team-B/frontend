@@ -2,6 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
 import '../home/home_screen.dart';
+import '../history/history_list_screen.dart';
+import '../settings/setting_screen.dart';
 import '../briefing/bri_playlist.dart';
 
 class FavoritesCategoryScreen extends StatelessWidget {
@@ -33,14 +35,31 @@ class FavoritesCategoryScreen extends StatelessWidget {
         'date': '25/07/03',
         'title': '뉴스 제목 3',
       },
+      {
+        'icon': 'assets/a_image/issue_icon.webp',
+        'name': '이슈',
+        'image': 'assets/a_image/home_news1.jpg',
+        'date': '25/07/04',
+        'title': '뉴스 제목 4',
+      },
+      {
+        'icon': 'assets/a_image/issue_icon.webp',
+        'name': '이슈',
+        'image': 'assets/a_image/home_news1.jpg',
+        'date': '25/07/05',
+        'title': '뉴스 제목 5',
+      },
     ];
 
-    // 카드 위치/회전값 (원하는 만큼 추가 가능)
-    final List<_CardTransform> cardTransforms = [
-      const _CardTransform(dx: 0, dy: 0, angle: -0.06),
-      const _CardTransform(dx: 40, dy: 80, angle: 0.04),
-      const _CardTransform(dx: 20, dy: 160, angle: -0.03),
-    ];
+    // 카드 위치/회전값 패턴 (반복 적용)
+    // 모든 카드 동일한 위치/회전값 적용
+    const double cardDx = 0; // x축 이동 없음
+    const double cardAngle = 0; // 회전 없음(혹은 미세하게 -0.01 등으로 조정 가능)
+
+    // 카드 하나의 높이와 카드 간 겹침량(겹침이 많을수록 값이 큼)
+    const double cardHeight = 260;
+    const double overlapAmount = 60; // 카드가 겹치는 부분의 높이
+    const double cardStep = cardHeight - overlapAmount; // 카드가 아래로 이동하는 거리
 
     return Scaffold(
       backgroundColor: const Color(0xFFE8F0FF),
@@ -72,11 +91,21 @@ class FavoritesCategoryScreen extends StatelessWidget {
                       children: [
                         GestureDetector(
                           onTap: () {
-                            Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const CustomHomeScreen()),
-                            );
+                            if (prevScreen == 'home') {
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const CustomHomeScreen()),
+                              );
+                            } else if (prevScreen == 'briefing') {
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const BriPlaylistScreen()),
+                              );
+                            } else {
+                              Navigator.of(context).pop();
+                            }
                           },
                           child: const Row(
                             children: [
@@ -110,7 +139,7 @@ class FavoritesCategoryScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                // 카드들 (겹치게 배치, 세로 스크롤)
+                // 카드들 (포개지면서 아래로 쭉 펼쳐짐, 스크롤 정상)
                 Positioned.fill(
                   top: 80,
                   child: LayoutBuilder(
@@ -118,22 +147,20 @@ class FavoritesCategoryScreen extends StatelessWidget {
                       return SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
                         child: SizedBox(
-                          height: 852,
+                          height: cardStep * (categories.length - 1) +
+                              cardHeight +
+                              40,
                           child: Stack(
                             alignment: Alignment.topCenter,
                             children: [
                               for (int i = 0; i < categories.length; i++)
                                 Positioned(
                                   left: (constraints.maxWidth - 220) / 2 +
-                                      cardTransforms[i % cardTransforms.length]
-                                          .dx,
-                                  top: cardTransforms[i % cardTransforms.length]
-                                          .dy +
-                                      i * 60,
+                                      cardDx +
+                                      (i % 2 == 0 ? -20 : 40),
+                                  top: cardStep * i,
                                   child: Transform.rotate(
-                                    angle: cardTransforms[
-                                            i % cardTransforms.length]
-                                        .angle,
+                                    angle: cardAngle,
                                     child: DashedBorderCard(
                                       categoryIcon: categories[i]['icon']!,
                                       categoryName: categories[i]['name']!,
@@ -157,14 +184,6 @@ class FavoritesCategoryScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-class _CardTransform {
-  final double dx;
-  final double dy;
-  final double angle;
-  const _CardTransform(
-      {required this.dx, required this.dy, required this.angle});
 }
 
 class DashedBorderCard extends StatelessWidget {

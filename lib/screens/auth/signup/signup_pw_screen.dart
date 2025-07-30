@@ -125,7 +125,8 @@ class _SignupPwScreenState extends State<SignupPwScreen> {
     
     print('받은 이메일: ${widget.email}'); // 디버깅용
     
-    if (widget.email == null || widget.email!.isEmpty) {
+    final email = widget.email;
+    if (email == null || email.isEmpty) {
       print('이메일이 없습니다!');
       return;
     }
@@ -137,7 +138,7 @@ class _SignupPwScreenState extends State<SignupPwScreen> {
     try {
       // 회원가입 API 호출
       final authResponse = await _authService.register(
-        email: widget.email!,
+        email: email,
         password: password,
       );
       

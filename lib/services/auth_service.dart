@@ -127,4 +127,27 @@ class AuthService {
   Future<void> clearToken() async {
     await _apiService.clearTokens();
   }
+
+  /// 사용자 목소리 타입 가져오기
+  Future<String?> getUserVoiceType() async {
+    try {
+      final response = await _apiService.get('/api/v1/user/voice-type');
+      return response.data['voice_type'];
+    } catch (e) {
+      print('목소리 타입 조회 실패: $e');
+      return null;
+    }
+  }
+
+  /// 목소리 타입 업데이트
+  Future<void> updateVoiceType(String voiceType) async {
+    try {
+      await _apiService.put(
+        '/api/v1/user/voice-type',
+        data: {'voice_type': voiceType},
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

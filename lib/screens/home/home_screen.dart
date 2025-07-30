@@ -9,6 +9,9 @@ import '../../services/news_service.dart';
 import '../../models/article_models.dart';
 import '../../providers/tts_provider.dart'; // TtsProvider 추가
 import 'package:provider/provider.dart'; // Consumer 추가
+import '../../providers/user_preferences_provider.dart'; // UserPreferencesProvider 추가
+import '../../services/api_service.dart'; // ApiService 추가
+import '../../models/common_models.dart'; // UserCategories, UserPress 추가
 
 class CustomHomeScreen extends StatefulWidget {
   const CustomHomeScreen({Key? key}) : super(key: key);
@@ -24,18 +27,86 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
 
   // API 서비스 인스턴스
   final NewsService _newsService = NewsService();
+  final ApiService _apiService = ApiService(); // ApiService 추가
 
   // 뉴스 데이터 상태
   List<ArticleModel> _breakingNews = [];
   List<ArticleModel> _keywordNews = [];
   Map<String, List<ArticleModel>> _categoryArticles = {}; // 카테고리별 기사 저장
   bool _isLoading = false;
+  
+  // 사용자 설정 상태 추가
+  List<String> _userCategories = [];
+  List<String> _userPress = [];
+  bool _isLoadingUserPreferences = false;
 
   @override
   void initState() {
     super.initState();
     _loadNewsData();
     _loadRecommendedNews();
+    _loadUserPreferences();
+  }
+
+  // 사용자 설정 로드 (API 직접 호출)
+  Future<void> _loadUserPreferences() async {
+    try {
+      setState(() {
+        _isLoadingUserPreferences = true;
+      });
+      
+      // 사용자 카테고리와 언론사 동시에 로드
+      final categoriesFuture = _apiService.getUserCategories();
+      final pressFuture = _apiService.getUserPress();
+      
+      final results = await Future.wait([categoriesFuture, pressFuture]);
+      
+      final userCategories = results[0] as UserCategories;
+      final userPress = results[1] as UserPress;
+      
+      setState(() {
+        _userCategories = userCategories.categories ?? [];
+        _userPress = userPress.press ?? [];
+        _isLoadingUserPreferences = false;
+      });
+      
+      // 디버깅용 로그
+      print('로드된 사용자 카테고리: $_userCategories');
+      print('로드된 사용자 언론사: $_userPress');
+      
+      // 사용자 카테고리별 기사 로드
+      if (_userCategories.isNotEmpty) {
+        _loadUserCategoryArticles();
+      }
+      
+    } catch (e) {
+      print('사용자 설정 로드 에러: $e');
+      setState(() {
+        _isLoadingUserPreferences = false;
+      });
+    }
+  }
+
+  // 사용자 카테고리별 기사 로드
+  Future<void> _loadUserCategoryArticles() async {
+    try {
+      print('사용자 카테고리별 기사 로드 시작: $_userCategories');
+      
+      // 각 카테고리별로 기사 로드
+      for (final category in _userCategories) {
+        try {
+          final articles = await _newsService.getPreferredCategoryArticles(category);
+          setState(() {
+            _categoryArticles[category] = articles;
+          });
+          print('$category 카테고리 기사 ${articles.length}개 로드 완료');
+        } catch (e) {
+          print('$category 카테고리 기사 로드 실패: $e');
+        }
+      }
+    } catch (e) {
+      print('사용자 카테고리 기사 로드 에러: $e');
+    }
   }
 
   // 뉴스 데이터 로드
@@ -76,12 +147,22 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
   // 추천 뉴스 데이터 로드
   Future<void> _loadRecommendedNews() async {
     try {
+      setState(() {
+        _isLoading = true;
+      });
+      
       final recommended = await _newsService.getRecommendedArticles();
       setState(() {
         _keywordNews = recommended;
+        _isLoading = false;
       });
+      
+      print('키워드별 뉴스 ${recommended.length}개 로드 완료');
     } catch (e) {
       print('추천 뉴스 데이터 로드 에러: $e');
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -102,6 +183,34 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
           ),
         );
       }
+    }
+  }
+
+  // 카테고리별 아이콘 경로 매핑 함수
+  String _getCategoryIconPath(String categoryName) {
+    switch (categoryName) {
+      case 'IT':
+        return 'assets/a_image/IT_icon.webp';
+      case '경제':
+        return 'assets/a_image/economy.png';
+      case '국제':
+        return 'assets/a_image/global_icon.png';
+      case '문화':
+        return 'assets/a_image/culture_icon.webp';
+      case '부동산':
+        return 'assets/a_image/real_estate_icon.png';
+      case '사회':
+        return 'assets/a_image/society_icon.webp';
+      case '스포츠':
+        return 'assets/a_image/sport_icon.png';
+      case '연예':
+        return 'assets/a_image/entertainment_icon.webp';
+      case '정치':
+        return 'assets/a_image/politics_icon.webp';
+      case '증권':
+        return 'assets/a_image/certificate_icon.webp';
+      default:
+        return 'assets/a_image/economy.png'; // 기본값
     }
   }
 
@@ -236,118 +345,51 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    SizedBox(
-                      height: 120,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const BriPlaylistScreen(selectedCategory: '경제'),
+                    _isLoadingUserPreferences
+                        ? const SizedBox(
+                            height: 120,
+                            child: Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          )
+                        : _userCategories.isEmpty
+                            ? const SizedBox(
+                                height: 120,
+                                child: Center(
+                                  child: Text(
+                                    '선택된 카테고리가 없습니다.',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                                 ),
-                              );
-                            },
-                            child: _buildTodayNewsCard(
-                                category: '경제',
-                                iconPath: 'assets/a_image/economy.png'),
-                          ),
-                          const SizedBox(width: 16),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const BriPlaylistScreen(selectedCategory: '정치'),
+                              )
+                            : SizedBox(
+                                height: 120,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                                  itemCount: _userCategories.length,
+                                  separatorBuilder: (_, __) => const SizedBox(width: 16),
+                                  itemBuilder: (context, index) {
+                                    final category = _userCategories[index];
+                                    return GestureDetector(
+                                      onTap: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) => BriPlaylistScreen(selectedCategory: category),
+                                          ),
+                                        );
+                                      },
+                                      child: _buildTodayNewsCard(
+                                        category: category,
+                                        iconPath: _getCategoryIconPath(category),
+                                      ),
+                                    );
+                                  },
                                 ),
-                              );
-                            },
-                            child: _buildTodayNewsCard(
-                                category: '정치',
-                                iconPath: 'assets/a_image/politics_icon.webp'),
-                          ),
-                          const SizedBox(width: 16),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const BriPlaylistScreen(selectedCategory: '사회'),
-                                ),
-                              );
-                            },
-                            child: _buildTodayNewsCard(
-                                category: '사회',
-                                iconPath: 'assets/a_image/society_icon.webp'),
-                          ),
-                          const SizedBox(width: 16),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const BriPlaylistScreen(selectedCategory: 'IT'),
-                                ),
-                              );
-                            },
-                            child: _buildTodayNewsCard(
-                                category: 'IT',
-                                iconPath: 'assets/a_image/IT_icon.webp'),
-                          ),
-                          const SizedBox(width: 16),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const BriPlaylistScreen(selectedCategory: '스포츠'),
-                                ),
-                              );
-                            },
-                            child: _buildTodayNewsCard(
-                                category: '스포츠',
-                                iconPath: 'assets/a_image/sports_icon.webp'),
-                          ),
-                          const SizedBox(width: 16),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const BriPlaylistScreen(selectedCategory: '문화'),
-                                ),
-                              );
-                            },
-                            child: _buildTodayNewsCard(
-                                category: '문화',
-                                iconPath: 'assets/a_image/culture_icon.webp'),
-                          ),
-                          const SizedBox(width: 16),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const BriPlaylistScreen(selectedCategory: '국제'),
-                                ),
-                              );
-                            },
-                            child: _buildTodayNewsCard(
-                                category: '국제',
-                                iconPath: 'assets/a_image/international_icon.webp'),
-                          ),
-                          const SizedBox(width: 16),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const BriPlaylistScreen(selectedCategory: '연예'),
-                                ),
-                              );
-                            },
-                            child: _buildTodayNewsCard(
-                                category: '연예',
-                                iconPath: 'assets/a_image/entertainment_icon.webp'),
-                          ),
-                        ],
-                      ),
-                    ),
+                              ),
                     const SizedBox(height: 18),
                     // 키워드별 뉴스 섹션
                     Padding(
@@ -378,30 +420,50 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
                     ),
                     const SizedBox(height: 10),
                     // 키워드별 뉴스 섹션에서 _keywordNews 사용
-                    SizedBox(
-                      height: 240,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        itemCount: _keywordNews.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 16),
-                        itemBuilder: (context, idx) {
-                          final article = _keywordNews[idx];
-                          return GestureDetector(
-                            onTap: () {
-                              if (article != null) {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => BriefingScreen(article: article),
+                    _isLoading
+                        ? const SizedBox(
+                            height: 240,
+                            child: Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          )
+                        : _keywordNews.isEmpty
+                            ? const SizedBox(
+                                height: 240,
+                                child: Center(
+                                  child: Text(
+                                    '키워드별 뉴스가 없습니다.',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.grey,
+                                    ),
                                   ),
-                                );
-                              }
-                            },
-                            child: _buildKeywordNewsCard(), // 필요시 article을 파라미터로 넘겨서 카드 내용도 연동 가능
-                          );
-                        },
-                      ),
-                    ),
+                                ),
+                              )
+                            : SizedBox(
+                                height: 240,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                                  itemCount: _keywordNews.length,
+                                  separatorBuilder: (_, __) => const SizedBox(width: 16),
+                                  itemBuilder: (context, idx) {
+                                    final article = _keywordNews[idx];
+                                    return GestureDetector(
+                                      onTap: () {
+                                        if (article != null) {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) => BriefingScreen(article: article),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      child: _buildKeywordNewsCard(article), // article을 파라미터로 전달
+                                    );
+                                  },
+                                ),
+                              ),
                     const SizedBox(height: 18),
                   ],
                 ),
@@ -608,7 +670,7 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
     );
   }
 
-  Widget _buildKeywordNewsCard() {
+  Widget _buildKeywordNewsCard(ArticleModel? article) {
     return Container(
       width: 200,
       height: 220,
@@ -639,10 +701,13 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(14),
-                child: Image.asset(
-                  'assets/a_image/home_news1.jpg',
-                  fit: BoxFit.cover,
-                ),
+                child: article?.thumbnailImageUrl != null && article!.thumbnailImageUrl!.isNotEmpty
+                    ? Image.network(
+                        article.thumbnailImageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 60, color: Color(0xFF7B6F5B)),
+                      )
+                    : const Icon(Icons.podcasts, size: 60, color: Color(0xFF7B6F5B)),
               ),
             ),
           ),
@@ -651,7 +716,7 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
             top: 140,
             left: 20,
             child: Text(
-              '2024. 09. 19.',
+              article?.publishedAt != null ? article!.publishedAt!.toIso8601String().split('T').first : '날짜 없음',
               style: TextStyle(
                 color: Colors.black.withOpacity(0.6),
                 fontSize: 13,
@@ -660,13 +725,13 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
             ),
           ),
           // 제목(굵게)
-          const Positioned(
+          Positioned(
             top: 160,
             left: 20,
             right: 20,
             child: Text(
-              '키워드 관련 뉴스 제목...',
-              style: TextStyle(
+              article?.title ?? '제목 없음',
+              style: const TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
@@ -676,13 +741,13 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
             ),
           ),
           // 출처(파란색)
-          const Positioned(
+          Positioned(
             top: 182,
             left: 20,
             right: 20,
             child: Text(
-              '연합뉴스',
-              style: TextStyle(
+              article?.author ?? '출처 없음',
+              style: const TextStyle(
                 color: Color(0xFF0565FF),
                 fontSize: 13,
                 fontWeight: FontWeight.w400,
@@ -699,11 +764,10 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
               padding: const EdgeInsets.only(top: 22.0),
               child: GestureDetector(
                 onTap: () {
-                  // 임시로 첫 번째 속보 기사를 사용 (실제로는 해당 키워드 기사를 사용해야 함)
-                  if (_breakingNews.isNotEmpty) {
+                  if (article != null) {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => BriefingScreen(article: _breakingNews[0]),
+                        builder: (context) => BriefingScreen(article: article, autoPlay: true),
                       ),
                     );
                   }
@@ -747,8 +811,13 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
               child: InkWell(
                 borderRadius: BorderRadius.circular(22),
                 onTap: () {
-                  // 듣기 버튼이 아닌 다른 부분 클릭 시 기사 화면으로 이동
-                  print('키워드 기사 상세 화면으로 이동');
+                  if (article != null) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => BriefingScreen(article: article, autoPlay: false),
+                      ),
+                    );
+                  }
                 },
                 child: Container(
                   decoration: BoxDecoration(
@@ -1141,3 +1210,4 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
     );
   }
 }
+

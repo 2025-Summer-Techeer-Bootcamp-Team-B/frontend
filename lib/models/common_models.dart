@@ -166,15 +166,15 @@ class UserKeywords {
 
   factory UserKeywords.fromJson(Map<String, dynamic> json) {
     return UserKeywords(
-      keywords: json['keywords'] != null 
-          ? List<String>.from(json['keywords'])
+      keywords: json['keyword'] != null 
+          ? List<String>.from(json['keyword'])
           : [],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'keywords': keywords,
+      'keyword': keywords,
     };
   }
 

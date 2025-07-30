@@ -99,10 +99,11 @@ class _UserKeywordExampleState extends State<UserKeywordExample> {
                 _buildSection(
                   '현재 관심 키워드',
                   [
-                    if (keywords.keyword?.isNotEmpty == true)
+                    if (keywords.keyword?.isNotEmpty == true) ...[
                       ...keywords.keyword!.map((keyword) => 
                         _buildKeywordChip(keyword)
                       ).toList()
+                    ]
                     else
                       const Text(
                         '설정된 키워드가 없습니다.',
