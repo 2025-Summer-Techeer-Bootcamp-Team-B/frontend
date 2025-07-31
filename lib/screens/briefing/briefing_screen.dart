@@ -113,18 +113,12 @@ class _BriefingScreenState extends State<BriefingScreen>
   }
 
   void _checkTitleAnimation() {
-    // 글자 수가 15자 초과일 때 애니메이션 적용 (더 긴 제목에서만)
-    if (articleTitle.length > 15) {
-      setState(() {
-        shouldAnimate = true;
-      });
-      _titleAnimationController.forward(); // 한 번만 실행
-    } else {
-      setState(() {
-        shouldAnimate = false;
-      });
-      _titleAnimationController.stop();
-    }
+    // 항상 애니메이션 시작 (강제)
+    setState(() {
+      shouldAnimate = true;
+    });
+    _titleAnimationController.repeat();
+    print('애니메이션 시작됨: $articleTitle');
   }
 
   @override
@@ -135,22 +129,19 @@ class _BriefingScreenState extends State<BriefingScreen>
 
     // Initialize title animation
     _titleAnimationController = AnimationController(
-      duration: const Duration(seconds: 20), // 더 천천히 움직이도록 조정
+      duration: const Duration(seconds: 150), // 매우 천천히1
       vsync: this,
     );
 
     _titleAnimation = Tween<Offset>(
       begin: const Offset(0, 0),
-      end: const Offset(-3.0, 0), // 애니메이션 범위를 줄여서 텍스트가 잘리지 않도록
+      end: const Offset(-2.0, 0), // 320px 컨테이너에서 전체 제목이 보이도록
     ).animate(CurvedAnimation(
       parent: _titleAnimationController,
       curve: Curves.linear, // 선형 움직임으로 변경
     ));
 
-    // 한 번만 실행하되 긴 거리를 움직이도록
-    _titleAnimationController.forward();
-
-    // 현재 기사가 이미 재생 중인지 확인하고 동기화
+    // 애니메이션 준비
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _syncAudioPlayerState();
       _checkTitleAnimation();
@@ -306,54 +297,42 @@ class _BriefingScreenState extends State<BriefingScreen>
                     ),
                   ),
                 ),
-                // 이미지 아래에 제목+출처+아이콘 Row 추가 (뮤직앱 스타일)
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // 제목+출처 - 버튼과 겹치지 않도록 공간 확보
-                      Flexible(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                          // 제목만 애니메이션 적용 - 기사 사진 폭에 맞춰서 제한
-                          ClipRect(
-                            child: Container(
-                              height: 32, // 한 줄 높이로 제한
-                              width: MediaQuery.of(context).size.width - 10, // 화면 폭에서 패딩만 뺀 크기 (최대한 넓게)
-                              child: shouldAnimate
-                                ? SlideTransition(
-                                    position: _titleAnimation,
-                                    child: Text(
-                                      '$articleTitle  $articleTitle', // 텍스트를 두 번 반복
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 26,
-                                        fontWeight: FontWeight.w500,
-                                        fontFamily: 'Pretendard',
-                                      ),
-                                      maxLines: 1, // 한 줄로 제한
-                                      overflow: TextOverflow.clip, // 오버플로우 방지
-                                      softWrap: false, // 줄바꿈 방지
-                                    ),
-                                  )
-                                : Text(
-                                    articleTitle,
-                                    style: const TextStyle(
-                                      color: Colors.black,
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.w500,
-                                      fontFamily: 'Pretendard',
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                
+                const SizedBox(height: 20), // 기사 사진과 제목 사이 간격 추가
+                
+                // 이미지 아래에 제목+출처+아이콘 추가 (뮤직앱 스타일)
+                Column(
+                  children: [
+                    // 제목 애니메이션 영역 - 정말 간단하게
+                    Container(
+                      width: 320, // 기사 사진 폭과 동일
+                      height: 50,
+                      child: OverflowBox(
+                        maxWidth: double.infinity,
+                        child: SlideTransition(
+                          position: _titleAnimation,
+                          child: Text(
+                            '$articleTitle ' * 10, // 10번 반복으로 확실하게
+                            style: const TextStyle(
+                              color: Colors.black, // 검은색으로 변경
+                              fontSize: 30, // 폰트 크기 살짝 키움
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Pretendard',
                             ),
+                            maxLines: 1,
+                            softWrap: false,
                           ),
-                          const SizedBox(height: 10), // 기자 이름을 아래로 내림
-                          // 출처는 애니메이션 없이 고정
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    // 기자명과 버튼들
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // 기자명을 왼쪽에 배치
                           Text(
                             articleSource,
                             style: const TextStyle(
@@ -363,68 +342,22 @@ class _BriefingScreenState extends State<BriefingScreen>
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                        ],
-                        ),
-                      ),
-                      const Spacer(), // 남은 공간을 모두 사용하여 아이콘을 오른쪽으로 밀어냄
-                      // 액션 버튼들
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          const SizedBox(height: 50), // 버튼들을 아래로 내림
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // 즐겨찾기 버튼 (왼쪽으로 이동)
-                              Consumer<FavoritesProvider>(
-                                builder: (context, favoritesProvider, child) {
-                                  final isFavorite = favoritesProvider.isFavorite(widget.article?.id ?? '');
-                                  return GestureDetector(
-                                    onTap: () {
-                                      if (widget.article != null) {
-                                        favoritesProvider.toggleFavorite(widget.article!);
-                                      }
-                                    },
-                                    child: Container(
-                                      width: 44,
-                                      height: 44,
-                                      decoration: BoxDecoration(
-                                        color: isFavorite ? const Color(0xFF0565FF) : Colors.white,
-                                        borderRadius: BorderRadius.circular(22),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(0.1),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Icon(
-                                        isFavorite ? Icons.favorite : Icons.favorite_border,
-                                        color: isFavorite ? Colors.white : Colors.red,
-                                        size: 22,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                              const SizedBox(width: 12),
-                              // 챗봇 버튼 (오른쪽으로 이동)
-                              GestureDetector(
+                          const Spacer(), // 기자명과 버튼 사이 공간
+                          // 즐겨찾기 버튼
+                          Consumer<FavoritesProvider>(
+                            builder: (context, favoritesProvider, child) {
+                              final isFavorite = favoritesProvider.isFavorite(widget.article?.id ?? '');
+                              return GestureDetector(
                                 onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) => BriChatBotScreen(
-                                        articleId: widget.article?.id,
-                                      ),
-                                    ),
-                                  );
+                                  if (widget.article != null) {
+                                    favoritesProvider.toggleFavorite(widget.article!);
+                                  }
                                 },
                                 child: Container(
                                   width: 44,
                                   height: 44,
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: isFavorite ? const Color(0xFF0565FF) : Colors.white,
                                     borderRadius: BorderRadius.circular(22),
                                     boxShadow: [
                                       BoxShadow(
@@ -434,23 +367,56 @@ class _BriefingScreenState extends State<BriefingScreen>
                                       ),
                                     ],
                                   ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(22),
-                                    child: Image.asset(
-                                      'assets/a_image/chatbot.webp',
-                                      width: 44,
-                                      height: 44,
-                                      fit: BoxFit.cover,
-                                    ),
+                                  child: Icon(
+                                    isFavorite ? Icons.favorite : Icons.favorite_border,
+                                    color: isFavorite ? Colors.white : Colors.red,
+                                    size: 22,
                                   ),
                                 ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                          // 챗봇 버튼
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => BriChatBotScreen(
+                                    articleId: widget.article?.id,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(22),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
-                            ],
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(22),
+                                child: Image.asset(
+                                  'assets/a_image/chatbot.webp',
+                                  width: 44,
+                                  height: 44,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: 4), // Reduced spacing
@@ -672,8 +638,10 @@ class _BriefingScreenState extends State<BriefingScreen>
                             builder: (context) => BriCaptionScreen(
                               imageUrl: articleImageUrl,
                               title: articleTitle,
-                              reporter: articleSource,
+                              reporter: articleSource,  
                               scriptLines: scriptLines,
+                              articleId: widget.article?.id,
+                              articleUrl: _articleData?['url'],
                             ),
                           ),
                         );
