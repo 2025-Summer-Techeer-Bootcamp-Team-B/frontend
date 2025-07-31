@@ -418,8 +418,9 @@ class _BriefingScreenState extends State<BriefingScreen>
                                 onTap: () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (context) =>
-                                          const BriChatBotScreen(),
+                                      builder: (context) => BriChatBotScreen(
+                                        articleId: widget.article?.id,
+                                      ),
                                     ),
                                   );
                                 },
