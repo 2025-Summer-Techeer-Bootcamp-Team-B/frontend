@@ -2,18 +2,27 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:news_app/screens/briefing/bri_playlist.dart'; // Added import for BriPlaylistScreen
+import 'package:provider/provider.dart';
+import '../../providers/favorites_provider.dart';
+import '../../providers/tts_provider.dart';
+import '../../models/article_models.dart';
+import 'bri_article_text.dart';
 
 class BriCaptionScreen extends StatefulWidget {
   final String imageUrl;
   final String title;
   final String reporter;
   final List<String> scriptLines;
+  final String? articleId;
+  final String? articleUrl;
 
   const BriCaptionScreen({
     required this.imageUrl,
     required this.title,
     required this.reporter,
     required this.scriptLines,
+    this.articleId,
+    this.articleUrl,
     Key? key,
   }) : super(key: key);
 
@@ -22,10 +31,15 @@ class BriCaptionScreen extends StatefulWidget {
 }
 
 class _BriCaptionScreenState extends State<BriCaptionScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+  
+  @override
+  bool get wantKeepAlive => true;
   int currentLine = 0;
+  int currentLyricIndex = 0; // 가사 인덱스
   final ScrollController _scrollController = ScrollController();
   Timer? _timer;
+  StreamSubscription? _positionSubscription;
 
   // Audio player
   late AudioPlayer _audioPlayer;
@@ -34,8 +48,7 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
   Duration totalDuration = Duration.zero;
   bool hasUserInteracted = false; // 사용자 상호작용 확인
 
-  // 각 줄별 재생 시간 (초 단위) - 실제 음성에 맞게 조정 필요
-  final List<double> lineTimings = [0, 3, 6, 9, 12, 15, 18];
+  // 사용하지 않음 - 하드코딩된 음성 파일 제거
 
   // Title animation
   bool shouldAnimate = false;
@@ -65,94 +78,125 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
     ));
 
     _checkTitleAnimation();
+    
+    // 화면 진입 후 바로 자막 시작 (TTS 재생 여부와 상관없이)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // 1초 후 자동으로 자막 시작
+      Timer(const Duration(seconds: 1), () {
+        if (mounted && !hasUserInteracted) {
+          setState(() {
+            hasUserInteracted = true;
+          });
+          _positionSubscription?.cancel();
+          _fallbackTick = 0;
+          _startTtsSyncedCaption();
+          print('자동 자막 시작');
+        }
+      });
+    });
   }
 
   void _setupAudioPlayer() async {
-    try {
-      // 음성 파일 로드 - 크롬 호환성을 위해 설정 추가
-      await _audioPlayer.setSource(AssetSource('a_voice/SK_tts.mp3'));
-
-      // 크롬에서의 오디오 재생을 위한 설정
-      await _audioPlayer.setReleaseMode(ReleaseMode.loop);
-
-      // 재생 상태 리스너
-      _audioPlayer.onPlayerStateChanged.listen((state) {
-        setState(() {
-          isPlaying = state == PlayerState.playing;
-        });
-      });
-
-      // 재생 시간 리스너
-      _audioPlayer.onPositionChanged.listen((position) {
-        setState(() {
-          currentPosition = position;
-          _updateCurrentLine(position);
-        });
-      });
-
-      // 전체 재생 시간 리스너
-      _audioPlayer.onDurationChanged.listen((duration) {
-        setState(() {
-          totalDuration = duration;
-        });
-      });
-
-      // 재생 완료 리스너
-      _audioPlayer.onPlayerComplete.listen((_) {
-        setState(() {
-          isPlaying = false;
-          currentLine = 0;
-        });
-      });
-    } catch (e) {
-      print('오디오 설정 오류: $e');
-      // 오디오 로드 실패 시 타이머로 자막 진행
-      _startFallbackTimer();
-    }
+    print('오디오 플레이어 설정 완료 - TTS 동기화 모드');
+    // TTS Provider와 동기화하여 백그라운드 음성과 자막 연동
   }
 
-  void _startFallbackTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (currentLine < widget.scriptLines.length - 1) {
-        setState(() {
-          currentLine++;
+  // 사용하지 않음 - 하드코딩된 음성 파일 제거로 인해 비활성화
+
+  void _startTtsSyncedCaption() {
+    print('TTS 동기화 자막 시작 - 총 ${widget.scriptLines.length}개 문장');
+    
+    // 0.3초마다 빠르게 TTS 상태를 체크하고 자막 동기화
+    _positionSubscription = Stream.periodic(const Duration(milliseconds: 300))
+        .listen((_) async {
+          if (!mounted) return;
+          
+          final ttsProvider = Provider.of<TtsProvider>(context, listen: false);
+          
+          // TTS가 재생 중이고 현재 기사와 일치하는지 확인
+          if (ttsProvider.isPlaying && 
+              ttsProvider.currentArticle?.id == widget.articleId &&
+              ttsProvider.currentAudioPlayer != null) {
+            
+            // 실제 TTS 재생 위치를 가져와서 자막 동기화
+            try {
+              final audioPlayer = ttsProvider.currentAudioPlayer!;
+              final position = await audioPlayer.position;
+              final totalDuration = await audioPlayer.duration;
+              
+              if (totalDuration != null && position != null && 
+                  totalDuration.inMilliseconds > 0) {
+                _updateCaptionFromTtsPosition(position, totalDuration);
+                return; // TTS 동기화 성공하면 fallback 안 함
+              }
+            } catch (e) {
+              print('TTS 위치 가져오기 실패: $e');
+            }
+          }
+          
+          // TTS 동기화 실패하거나 재생 중이 아니면 기본 타이머
+          _fallbackToTimer();
         });
-        _scrollToCurrentLine();
-      } else {
-        _timer?.cancel();
-      }
-    });
+  }
+  
+  void _updateCaptionFromTtsPosition(Duration position, Duration totalDuration) {
+    // TTS 전체 시간을 문장 수로 나누어 각 문장의 시간 계산
+    final totalSeconds = totalDuration.inMilliseconds / 1000.0;
+    final currentSeconds = position.inMilliseconds / 1000.0;
+    final scriptCount = widget.scriptLines.length;
+    
+    if (scriptCount <= 1) return;
+    
+    // 현재 재생 위치에 맞는 문장 계산
+    final expectedLineIndex = ((currentSeconds / totalSeconds) * scriptCount).floor();
+    final clampedIndex = expectedLineIndex.clamp(0, scriptCount - 1);
+    
+    if (currentLyricIndex != clampedIndex) {
+      setState(() {
+        currentLyricIndex = clampedIndex;
+        currentLine = clampedIndex;
+      });
+      _scrollToCurrentLine();
+      print('TTS 동기화: $clampedIndex번째 문장 (${currentSeconds.toStringAsFixed(1)}s/${totalSeconds.toStringAsFixed(1)}s)');
+    }
+  }
+  
+  int _fallbackTick = 0;
+  void _fallbackToTimer() {
+    // TTS가 없을 때의 기본 타이머 (3초마다 넘어감)
+    _fallbackTick++;
+    final shouldMoveToNext = _fallbackTick % 6 == 0; // 0.5초 * 6 = 3초
+    
+    if (shouldMoveToNext && currentLyricIndex < widget.scriptLines.length - 1) {
+      setState(() {
+        currentLyricIndex++;
+        currentLine = currentLyricIndex;
+      });
+      _scrollToCurrentLine();
+      print('기본 타이머: $currentLyricIndex번째 문장으로 이동');
+    } else if (currentLyricIndex >= widget.scriptLines.length - 1) {
+      _positionSubscription?.cancel();
+      print('모든 문장 완료');
+    }
   }
 
   void _startAutoPlay() async {
     if (!hasUserInteracted) {
-      hasUserInteracted = true;
-      try {
-        await _audioPlayer.resume();
-      } catch (e) {
-        print('자동 재생 오류: $e');
-      }
+      setState(() {
+        hasUserInteracted = true;
+      });
     }
+    
+    // 기존 subscription 정리
+    _positionSubscription?.cancel();
+    _fallbackTick = 0; // 카운터 초기화
+    
+    // TTS 동기화 자막 시작
+    _startTtsSyncedCaption();
+    print('자막 시작');
   }
 
-  void _updateCurrentLine(Duration position) {
-    final currentSeconds = position.inSeconds;
-
-    // 현재 시간에 맞는 줄 찾기
-    for (int i = 0; i < lineTimings.length; i++) {
-      if (currentSeconds >= lineTimings[i] &&
-          (i == lineTimings.length - 1 ||
-              currentSeconds < lineTimings[i + 1])) {
-        if (currentLine != i) {
-          setState(() {
-            currentLine = i;
-          });
-          _scrollToCurrentLine();
-        }
-        break;
-      }
-    }
-  }
+  // 음성 기반 업데이트 함수들 - 하드코딩된 음성 파일 제거로 인해 비활성화
 
   void _checkTitleAnimation() {
     setState(() {
@@ -182,6 +226,7 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
   @override
   void dispose() {
     _timer?.cancel();
+    _positionSubscription?.cancel();
     _scrollController.dispose();
     _titleAnimationController.dispose();
     _audioPlayer.dispose();
@@ -190,8 +235,27 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // AutomaticKeepAliveClientMixin을 위해 필요
+    
     // 아이폰 15 사이즈 기준 레이아웃
-    return Scaffold(
+    return Consumer<TtsProvider>(
+      builder: (context, ttsProvider, child) {
+        // TTS 상태가 변경되면 자막도 자동 시작/동기화
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!hasUserInteracted && 
+              ttsProvider.isPlaying && 
+              ttsProvider.currentArticle?.id == widget.articleId) {
+            setState(() {
+              hasUserInteracted = true;
+            });
+            _positionSubscription?.cancel();
+            _fallbackTick = 0;
+            _startTtsSyncedCaption();
+            print('TTS 상태 변화 감지: 자막 자동 시작');
+          }
+        });
+        
+        return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
@@ -242,12 +306,34 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
                                 width: 64,
                                 height: 64,
                                 fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 64,
+                                    height: 64,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[300],
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Icon(
+                                      Icons.image,
+                                      color: Colors.grey,
+                                      size: 32,
+                                    ),
+                                  );
+                                },
                               )
-                            : Image.asset(
-                                'assets/a_image/SKhynix.jpg',
+                            : Container(
                                 width: 64,
                                 height: 64,
-                                fit: BoxFit.cover,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.image,
+                                  color: Colors.grey,
+                                  size: 32,
+                                ),
                               ),
                       ),
                       const SizedBox(width: 20),
@@ -298,34 +384,55 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
                           ],
                         ),
                       ),
-                      // ...아이콘, 별 아이콘(assets)
-                      Column(
-                        children: [
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.more_horiz,
-                                    color: Colors.grey),
-                                onPressed: () {},
+                      // 즐겨찾기 하트 아이콘
+                      Consumer<FavoritesProvider>(
+                        builder: (context, favoritesProvider, child) {
+                          final isFavorite = favoritesProvider.isFavorite(widget.articleId ?? '');
+                          return GestureDetector(
+                            onTap: () {
+                              if (widget.articleId != null) {
+                                // ArticleModel을 생성해서 즐겨찾기에 추가/제거
+                                // 간단한 ArticleModel 생성 (실제로는 더 많은 정보가 필요할 수 있음)
+                                final article = ArticleModel(
+                                  id: widget.articleId!,
+                                  title: widget.title,
+                                  author: widget.reporter,
+                                  thumbnailImageUrl: widget.imageUrl,
+                                );
+                                favoritesProvider.toggleFavorite(article);
+                              }
+                            },
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: isFavorite ? const Color(0xFF0565FF) : Colors.white,
+                                borderRadius: BorderRadius.circular(22),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 2),
-                              IconButton(
-                                icon: Image.asset(
-                                  'assets/a_image/star.png',
-                                  width: 28,
-                                  height: 28,
-                                ),
-                                onPressed: () {},
+                              child: Icon(
+                                isFavorite ? Icons.favorite : Icons.favorite_border,
+                                color: isFavorite ? Colors.white : Colors.red,
+                                size: 22,
                               ),
-                            ],
-                          ),
-                        ],
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
                 ),
 
                 const SizedBox(height: 8),
+                
+
+                
                 // 대본(스크롤) - 클릭하면 자동 재생 시작
                 Expanded(
                   child: GestureDetector(
@@ -343,11 +450,11 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
                             textAlign: TextAlign.center, // 가운데 정렬
                             style: TextStyle(
                               fontSize: 22, // 글자 크기 줄임
-                              fontWeight: FontWeight.w700,
+                              fontWeight: idx == currentLine 
+                                  ? FontWeight.w900  // 현재 읽는 줄: 매우 굵게
+                                  : FontWeight.w400, // 나머지 줄: 보통 굵기
                               fontFamily: 'Arial', // 기본 폰트로 변경
-                              color: idx == currentLine
-                                  ? Colors.black
-                                  : Colors.black38,
+                              color: Colors.black, // 모든 텍스트를 검은색으로 통일
                             ),
                           ),
                         );
@@ -387,9 +494,20 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
                           height: 28,
                         ),
                       ),
-                      // 신문 아이콘 (기사 원문보기 텍스트 제거)
+                      // 신문 아이콘 (기사 원문보기)
                       GestureDetector(
-                        onTap: () {},
+                        onTap: () {
+                          if (widget.articleUrl != null && widget.articleUrl!.isNotEmpty) {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => BriArticleTextScreen(
+                                  title: widget.title,
+                                  url: widget.articleUrl!,
+                                ),
+                              ),
+                            );
+                          }
+                        },
                         child: Image.asset(
                           'assets/a_image/newspaper.png',
                           width: 28,
@@ -404,6 +522,8 @@ class _BriCaptionScreenState extends State<BriCaptionScreen>
           ),
         ),
       ),
+    );
+      }, // Consumer 닫기
     );
   }
 }
