@@ -124,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       // API 호출
-      final authResponse = await _authService.login(email.trim(), password);
+      final authResponse = await _authService.login(email.trim(), password, context);
 
       print('로그인 성공: ${authResponse.email}');
       print('토큰: ${authResponse.accessToken}');

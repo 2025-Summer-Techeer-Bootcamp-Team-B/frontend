@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'keyword_select.dart';
-import 'media_select.dart';
+import 'press_select.dart';
 import '../../../models/category_model.dart';
 import '../../../services/api_service.dart';
 
@@ -55,16 +55,7 @@ class _CategorySelectPageState extends State<CategorySelectPage> {
     
     print('카테고리 선택 완료: $selectedCategories');
     
-    // 성공 메시지 표시
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('카테고리가 선택되었습니다.'),
-          backgroundColor: Color(0xFF0565FF),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
+
     
     if (mounted) {
       setState(() {

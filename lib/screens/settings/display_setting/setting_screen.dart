@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'contents_setting/keyword_edit.dart';
-import 'contents_setting/media_edit.dart';
-import 'contents_setting/category_edit.dart';
-import 'display_setting/font_size.dart';
-import '../home/home_screen.dart';
-import '../history/history_list_screen.dart';
-import '../briefing/bri_playlist.dart';
+import '../contents_setting/keyword_edit.dart';
+import '../contents_setting/voice_edit.dart';
+import '../contents_setting/press_edit.dart';
+import '../contents_setting/category_edit.dart';
+import 'font_size.dart';
+import '../../home/home_screen.dart';
+import '../../history/history_list_screen.dart';
+import '../../briefing/bri_playlist.dart';
+import '../../auth/interest/voice_select.dart';
+import '../../../providers/user_info_provider.dart';
 
 
 class SettingScreen extends StatefulWidget {
@@ -126,14 +129,18 @@ class _SettingScreenState extends State<SettingScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text(
-                                'abcd1234@naver.com',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Pretendard',
-                                  color: Colors.black,
-                                ),
+                              Consumer<UserInfoProvider>(
+                                builder: (context, userInfoProvider, child) {
+                                  return Text(
+                                    userInfoProvider.userEmail ?? '사용자 정보 없음',
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Pretendard',
+                                      color: Colors.black,
+                                    ),
+                                  );
+                                },
                               ),
                               const SizedBox(height: 4),
                               GestureDetector(
@@ -176,7 +183,7 @@ class _SettingScreenState extends State<SettingScreen> {
                             '관심 카테고리 수정',
                             '관심 키워드 수정',
                             '관심 언론사 수정',
-                            '목소리 설정',
+                            '음성 설정',
                           ],
                         ),
                         _buildDivider(),
@@ -340,13 +347,19 @@ class _SettingScreenState extends State<SettingScreen> {
         } else if (title == '관심 언론사 수정') {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => const MediaEditPage(),
+              builder: (context) => const PressEditPage(),
             ),
           );
         } else if (title == '글자 크기 조정') {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => const FontSizeSettingScreen(),
+            ),
+          );
+        } else if (title == '음성 설정') {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const VoiceEditPage(),
             ),
           );
         } else {

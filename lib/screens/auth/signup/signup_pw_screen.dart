@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../start_screen.dart';
 import 'signup_email_screen.dart';
-import '../interest/media_select.dart';
+import '../interest/press_select.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/api_service.dart';
 import '../../../models/auth_models.dart';
@@ -153,7 +153,7 @@ class _SignupPwScreenState extends State<SignupPwScreen> {
       if (mounted) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const MediaSelectPage()),
+                            MaterialPageRoute(builder: (context) => const PressSelectPage()),
         );
       }
     } catch (e) {

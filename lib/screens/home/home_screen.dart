@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import '../briefing/bri_playlist.dart';
-import '../favorites/fav_s_t_off.dart';
+
 import '../favorites/favorites_screen.dart';
 import '../history/history_list_screen.dart';
-import '../settings/setting_screen.dart';
+import '../settings/display_setting/setting_screen.dart';
 import '../settings/contents_setting/keyword_edit.dart';
 import '../briefing/keyword_news.dart';
-import '../history/history_list_screen.dart';
 
 import '../briefing/briefing_screen.dart';
 import '../../services/news_service.dart';

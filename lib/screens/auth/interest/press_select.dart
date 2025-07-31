@@ -3,14 +3,14 @@ import 'category_select.dart';
 import '../../../models/category_model.dart';
 import '../../../services/api_service.dart';
 
-class MediaSelectPage extends StatefulWidget {
-  const MediaSelectPage({super.key});
+class PressSelectPage extends StatefulWidget {
+  const PressSelectPage({super.key});
 
   @override
-  State<MediaSelectPage> createState() => _MediaSelectPageState();
+  State<PressSelectPage> createState() => _PressSelectPageState();
 }
 
-class _MediaSelectPageState extends State<MediaSelectPage> {
+class _PressSelectPageState extends State<PressSelectPage> {
   final List<Map<String, String>> mediaList = [
     {'name': 'SBS뉴스', 'image': 'assets/a_image/sbs_news_logo.png'},
     {'name': '한국경제', 'image': 'assets/a_image/hkyungjae_news_logo.png'},
@@ -54,16 +54,7 @@ class _MediaSelectPageState extends State<MediaSelectPage> {
     
     print('언론사 선택 완료: $selectedPress');
     
-    // 성공 메시지 표시
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('언론사가 선택되었습니다.'),
-          backgroundColor: Color(0xFF0565FF),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
+
     
     if (mounted) {
       setState(() {
@@ -337,4 +328,4 @@ class _LongArrowPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
+} 

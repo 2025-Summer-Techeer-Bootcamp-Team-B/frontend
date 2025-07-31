@@ -14,8 +14,8 @@ class ApiService {
   String? _refreshToken; // 리프레시 토큰 추가
   bool _isRefreshing = false; // 토큰 갱신 중인지 확인하는 플래그
 
-  //static const String baseUrl = 'http://yosm-n.kro.kr:8000'; // 실제 백엔드 서버
   static const String baseUrl = 'http://yosm-n.kro.kr:8000'; // 실제 백엔드 서버
+  //static const String baseUrl = 'http://127.0.0.1:8000'; // 로컬 백엔드 서버
 
   Future<void> initialize() async {
     // 저장된 토큰들 불러오기
@@ -23,8 +23,8 @@ class ApiService {
 
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
+      connectTimeout: const Duration(seconds: 5),
+      receiveTimeout: const Duration(seconds: 10),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',

@@ -1,6 +1,9 @@
+import 'package:flutter/material.dart';
 import '../models/auth_models.dart';
 import '../models/common_models.dart';
 import 'api_service.dart';
+import 'package:provider/provider.dart';
+import '../providers/user_info_provider.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -10,7 +13,7 @@ class AuthService {
   final ApiService _apiService = ApiService();
 
   /// 로그인
-  Future<AuthResponse> login(String email, String password) async {
+  Future<AuthResponse> login(String email, String password, BuildContext context) async {
     try {
       final request = LoginRequest(email: email, password: password);
       final response = await _apiService.post(
@@ -20,6 +23,11 @@ class AuthService {
       final authResponse = AuthResponse.fromJson(response.data);
       // 액세스 토큰과 리프레시 토큰 모두 저장
       await _apiService.setTokens(authResponse.accessToken ?? '', authResponse.refreshToken ?? '');
+      
+      // 사용자 정보 저장
+      final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
+      userInfoProvider.setUserInfo(email);
+      
       return authResponse;
     } catch (e) {
       rethrow;
