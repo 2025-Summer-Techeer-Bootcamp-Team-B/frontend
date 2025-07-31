@@ -141,7 +141,7 @@ class _BriefingScreenState extends State<BriefingScreen>
 
     _titleAnimation = Tween<Offset>(
       begin: const Offset(0, 0),
-      end: const Offset(-3.0, 0), // 텍스트가 완전히 지나가도록 더 많이 움직임
+      end: const Offset(-3.0, 0), // 애니메이션 범위를 줄여서 텍스트가 잘리지 않도록
     ).animate(CurvedAnimation(
       parent: _titleAnimationController,
       curve: Curves.linear, // 선형 움직임으로 변경
@@ -314,14 +314,16 @@ class _BriefingScreenState extends State<BriefingScreen>
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       // 제목+출처 - 버튼과 겹치지 않도록 공간 확보
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // 제목만 애니메이션 적용 - 버튼과 겹치지 않도록 제한
-                          Container(
-                            height: 32, // 한 줄 높이로 제한
-                            width: MediaQuery.of(context).size.width * 0.35, // 화면 너비의 35%만 사용 (더 좁게)
-                            child: shouldAnimate
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                          // 제목만 애니메이션 적용 - 기사 사진 폭에 맞춰서 제한
+                          ClipRect(
+                            child: Container(
+                              height: 32, // 한 줄 높이로 제한
+                              width: MediaQuery.of(context).size.width - 10, // 화면 폭에서 패딩만 뺀 크기 (최대한 넓게)
+                              child: shouldAnimate
                                 ? SlideTransition(
                                     position: _titleAnimation,
                                     child: Text(
@@ -333,7 +335,7 @@ class _BriefingScreenState extends State<BriefingScreen>
                                         fontFamily: 'Pretendard',
                                       ),
                                       maxLines: 1, // 한 줄로 제한
-                                      overflow: TextOverflow.visible, // 넘치는 텍스트도 보이도록
+                                      overflow: TextOverflow.clip, // 오버플로우 방지
                                       softWrap: false, // 줄바꿈 방지
                                     ),
                                   )
@@ -348,6 +350,7 @@ class _BriefingScreenState extends State<BriefingScreen>
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
+                            ),
                           ),
                           const SizedBox(height: 10), // 기자 이름을 아래로 내림
                           // 출처는 애니메이션 없이 고정
@@ -361,6 +364,7 @@ class _BriefingScreenState extends State<BriefingScreen>
                             ),
                           ),
                         ],
+                        ),
                       ),
                       const Spacer(), // 남은 공간을 모두 사용하여 아이콘을 오른쪽으로 밀어냄
                       // 액션 버튼들
@@ -379,14 +383,6 @@ class _BriefingScreenState extends State<BriefingScreen>
                                     onTap: () {
                                       if (widget.article != null) {
                                         favoritesProvider.toggleFavorite(widget.article!);
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              isFavorite ? '즐겨찾기에서 제거되었습니다.' : '즐겨찾기에 추가되었습니다.'
-                                            ),
-                                            backgroundColor: const Color(0xFF0565FF),
-                                          ),
-                                        );
                                       }
                                     },
                                     child: Container(

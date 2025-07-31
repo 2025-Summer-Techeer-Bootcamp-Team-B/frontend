@@ -163,41 +163,9 @@ class _PressEditPageState extends State<PressEditPage>
       
       print('언론사 업데이트 완료: $selectedMedias');
       
-      // 저장 완료 다이얼로그 표시
+      // 설정 화면으로 바로 돌아가기
       if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: Row(
-              children: [
-                Icon(
-                  Icons.check_circle,
-                  color: Colors.green,
-                  size: 24,
-                ),
-                const SizedBox(width: 8),
-                const Text('저장 완료'),
-              ],
-            ),
-            content: Text(
-              '언론사가 성공적으로 저장되었습니다.',
-              style: const TextStyle(fontSize: 16),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // 다이얼로그 닫기
-                  Navigator.of(context).pop(); // 설정 화면으로 돌아가기
-                },
-                child: const Text('확인'),
-              ),
-            ],
-          ),
-        );
+        Navigator.of(context).pop(); // 설정 화면으로 돌아가기
       }
     } catch (e) {
       print('언론사 업데이트 실패: $e');

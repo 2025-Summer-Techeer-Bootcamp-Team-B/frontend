@@ -272,15 +272,7 @@ class _KeywordSelectPageState extends State<KeywordSelectPage> {
                             final updatedKeywords = await apiService.updateUserKeywords(keywords);
                             print('업데이트된 키워드: ${updatedKeywords.keywords}');
                             
-                            // 성공 메시지 표시
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('관심 정보가 성공적으로 저장되었습니다.'),
-                                  backgroundColor: Color(0xFF0565FF),
-                                ),
-                              );
-                            }
+
                             
                             // 완료 처리 - 음성 선택 화면으로 이동
                             print('VoiceSelectScreen으로 이동 시도...');

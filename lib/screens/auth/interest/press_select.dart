@@ -54,16 +54,7 @@ class _PressSelectPageState extends State<PressSelectPage> {
     
     print('언론사 선택 완료: $selectedPress');
     
-    // 성공 메시지 표시
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('언론사가 선택되었습니다.'),
-          backgroundColor: Color(0xFF0565FF),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
+
     
     if (mounted) {
       setState(() {

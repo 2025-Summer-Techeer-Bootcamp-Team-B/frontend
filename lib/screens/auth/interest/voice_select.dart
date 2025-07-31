@@ -292,51 +292,29 @@ class _VoiceSelectScreenState extends State<VoiceSelectScreen>
             
             const SizedBox(width: 16),
             
-            // 버튼들
-            Column(
-              children: [
-                // 재생 버튼
-                GestureDetector(
-                  onTap: () => _playVoiceSample(voiceType),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: isSelected ? Colors.white : const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(8),
+            // 재생 버튼
+            GestureDetector(
+              onTap: () => _playVoiceSample(voiceType),
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.white : const Color(0xFFF5F5F5),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
                     ),
-                    child: Icon(
-                      _isPlaying && _currentlyPlaying == voiceType ? Icons.stop : Icons.play_arrow,
-                      color: isSelected ? const Color(0xFF0565FF) : Colors.grey,
-                      size: 24,
-                    ),
-                  ),
+                  ],
                 ),
-                
-                const SizedBox(height: 8),
-                
-                // 선택 버튼
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedVoiceType = voiceType;
-                    });
-                  },
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: isSelected ? Colors.white : const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.check,
-                      color: isSelected ? const Color(0xFF0565FF) : Colors.grey,
-                      size: 24,
-                    ),
-                  ),
+                child: Icon(
+                  _isPlaying && _currentlyPlaying == voiceType ? Icons.stop : Icons.play_arrow,
+                  color: isSelected ? const Color(0xFF0565FF) : Colors.grey,
+                  size: 32,
                 ),
-              ],
+              ),
             ),
           ],
         ),
@@ -389,9 +367,9 @@ class _VoiceSelectScreenState extends State<VoiceSelectScreen>
 
       String audioUrl;
       if (voiceType == 'male_voice') {
-        audioUrl = 'https://storage.googleapis.com/news_briefing_bucket/audio/2025/07/28/6bbd6ecf-62bb-4f7d-9334-f2a766c8dff2.mp3';
+        audioUrl = 'assets/a_voice/male_voice.mp3';
       } else {
-        audioUrl = 'https://storage.googleapis.com/news_briefing_bucket/audio/2025/07/28/6bbd6ecf-62bb-4f7d-9334-f2a766c8dff2.mp3';
+        audioUrl = 'assets/a_voice/female_voice.mp3';
       }
 
       setState(() {
@@ -399,7 +377,7 @@ class _VoiceSelectScreenState extends State<VoiceSelectScreen>
         _currentlyPlaying = voiceType;
       });
 
-      await _justAudioPlayer.setUrl(audioUrl);
+      await _justAudioPlayer.setAsset(audioUrl);
       await _justAudioPlayer.play();
 
       // 재생 완료 리스너
@@ -423,52 +401,20 @@ class _VoiceSelectScreenState extends State<VoiceSelectScreen>
   void _showSelectionCompleteDialog() {
     if (selectedVoiceType == null) return;
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Row(
-          children: [
-            Icon(
-              Icons.check_circle,
-              color: Colors.green,
-              size: 24,
-            ),
-            const SizedBox(width: 8),
-            const Text('선택 완료'),
-          ],
-        ),
-        content: Text(
-          '${selectedVoiceType == 'male_voice' ? '남성' : '여성'} 음성을 선택했습니다.',
-          style: const TextStyle(fontSize: 16),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // 다이얼로그 닫기
-              
-              // 호출한 화면이 설정 화면인지 확인
-              final isFromSettings = ModalRoute.of(context)?.settings.arguments as bool? ?? false;
-              
-              if (isFromSettings) {
-                // 설정에서 호출된 경우: 선택된 음성 타입을 반환하고 이전 화면으로 돌아가기
-                Navigator.of(context).pop(selectedVoiceType);
-              } else {
-                // 회원가입에서 호출된 경우: Provider에 설정하고 welcome 화면으로 이동
-                // male_voice -> male, female_voice -> female로 변환
-                String voiceType = selectedVoiceType == 'male_voice' ? 'male' : 'female';
-                context.read<UserVoiceTypeProvider>().setVoiceType(voiceType);
-                _navigateToMain();
-              }
-            },
-            child: const Text('확인'),
-          ),
-        ],
-      ),
-    );
+    // 다이얼로그 없이 바로 다음 단계로 진행
+    // 호출한 화면이 설정 화면인지 확인
+    final isFromSettings = ModalRoute.of(context)?.settings.arguments as bool? ?? false;
+    
+    if (isFromSettings) {
+      // 설정에서 호출된 경우: 선택된 음성 타입을 반환하고 이전 화면으로 돌아가기
+      Navigator.of(context).pop(selectedVoiceType);
+    } else {
+      // 회원가입에서 호출된 경우: Provider에 설정하고 welcome 화면으로 이동
+      // male_voice -> male, female_voice -> female로 변환
+      String voiceType = selectedVoiceType == 'male_voice' ? 'male' : 'female';
+      context.read<UserVoiceTypeProvider>().setVoiceType(voiceType);
+      _navigateToMain();
+    }
   }
 
   // 환영 화면으로 이동

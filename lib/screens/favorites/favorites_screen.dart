@@ -458,12 +458,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> with TickerProviderSt
                           GestureDetector(
                             onTap: () {
                               favoritesProvider.removeFromFavorites(article.id);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('즐겨찾기에서 제거되었습니다.'),
-                                  backgroundColor: Color(0xFF0565FF),
-                                ),
-                              );
                             },
                             child: Container(
                               padding: const EdgeInsets.all(8),

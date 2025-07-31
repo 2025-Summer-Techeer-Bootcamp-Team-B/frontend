@@ -15,6 +15,7 @@ class _CategoryEditPageState extends State<CategoryEditPage> {
   late List<String> availableCategories;
   final Set<int> selected = {};
   bool isUpdating = false;
+  bool isLoading = true; // 초기 로딩 상태
   List<String> currentCategories = []; // 현재 저장된 카테고리들
 
   @override
@@ -25,30 +26,69 @@ class _CategoryEditPageState extends State<CategoryEditPage> {
     _loadSavedCategories();
   }
 
-  // 저장된 카테고리 정보 불러오기
+  // 저장된 카테고리 정보 불러오기 (언론사/키워드와 동일한 방식)
   Future<void> _loadSavedCategories() async {
+    print('🔄 사용자 카테고리 불러오기 시작...');
+    
     try {
-      final apiService = ApiService();
-      final userCategories = await apiService.get('/api/v1/user/categories');
+      setState(() {
+        isLoading = true;
+      });
       
-      if (userCategories.data != null && userCategories.data['categories'] != null) {
-        final savedCategories = List<String>.from(userCategories.data['categories']);
+      final apiService = ApiService();
+      await apiService.initialize();
+      final userCategories = await apiService.getUserCategories();
+      
+      print('📦 API 응답: $userCategories');
+      print('📦 API 응답 - category 필드: ${userCategories.category}');
+      
+      if (userCategories.category != null && userCategories.category!.isNotEmpty) {
         setState(() {
-          currentCategories = savedCategories;
+          currentCategories = userCategories.category!;
+          selected.clear(); // 기존 선택 초기화
+          
           // 저장된 카테고리들을 선택 상태로 설정
           for (int i = 0; i < availableCategories.length; i++) {
-            if (savedCategories.contains(availableCategories[i])) {
+            final categoryName = availableCategories[i];
+            if (userCategories.category!.contains(categoryName)) {
               selected.add(i);
+              print('🎯 카테고리 선택됨: $categoryName (인덱스: $i)');
+            } else {
+              print('카테고리 매칭 실패: $categoryName');
             }
           }
+          
+          print('📊 선택된 인덱스: $selected');
+          print('📋 현재 선택된 카테고리: ${selected.map((i) => availableCategories[i]).toList()}');
+          isLoading = false;
+        });
+        print('✅ 기존 사용자 카테고리 로드 완료: ${userCategories.category}');
+      } else {
+        print('⚠️ API 응답이 비어있음');
+        setState(() {
+          isLoading = false;
         });
       }
     } catch (e) {
-      print('저장된 카테고리 불러오기 실패: $e');
+      print('❌ 저장된 카테고리 불러오기 실패: $e');
+      setState(() {
+        isLoading = false;
+      });
+      
+      // 에러 메시지 표시
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('저장된 카테고리 정보를 불러오는데 실패했습니다.'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 
-  // 카테고리 선택 변경 시 API로 업데이트 (category_select와 동일한 로직)
+  // 카테고리 선택 변경 시 API로 업데이트 (언론사/키워드와 동일한 방식)
   Future<void> _updateCategories() async {
     // 최소 3개 이상 선택되었을 때만 처리
     List<String> selectedCategories = selected
@@ -63,24 +103,13 @@ class _CategoryEditPageState extends State<CategoryEditPage> {
     
     try {
       final apiService = ApiService();
-      await apiService.put('/api/v1/user/categories', data: {
-        'categories': selectedCategories,
-      });
+      await apiService.updateUserCategories(selectedCategories);
       
-      print('카테고리 선택 완료: $selectedCategories');
+      print('✅ 카테고리 선택 완료: $selectedCategories');
       
-      // 성공 메시지 표시
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('카테고리가 선택되었습니다.'),
-            backgroundColor: Color(0xFF0565FF),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
+
     } catch (e) {
-      print('카테고리 업데이트 실패: $e');
+      print('❌ 카테고리 업데이트 실패: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -138,7 +167,7 @@ class _CategoryEditPageState extends State<CategoryEditPage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: GestureDetector(
-                onTap: () async {
+                onTap: isLoading ? null : () async {
                   setState(() {
                     if (isSelected) {
                       selected.remove(idx);
@@ -147,56 +176,38 @@ class _CategoryEditPageState extends State<CategoryEditPage> {
                     }
                   });
                   
-                  // 선택이 변경될 때마다 업데이트 (3개 이상일 때만)
-                  if (selected.length >= 3) {
-                    await _updateCategories();
-                  }
+                  // 카테고리 선택이 변경될 때마다 API로 업데이트
+                  await _updateCategories();
                 },
-                child: Container(
-                  width: 96,
-                  height: 104,
+                child: Opacity(
+                  opacity: isLoading ? 0.6 : 1.0,
+                  child: Container(
+                    width: 96,
+                    height: 104,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                      border: isSelected
+                          ? Border.all(
+                              color: const Color(0xFF0565FF),
+                              width: 2)
+                          : null,
+                    ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        width: iconSize + 16,
-                        height: iconSize + 16,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? const Color(0xFF0565FF)
-                              : const Color(0xFFF5F5F5),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isSelected
-                                ? const Color(0xFF0565FF)
-                                : const Color(0xFFE0E0E0),
-                            width: 2,
-                          ),
-                        ),
-                        child: Center(
-                          child: Image.asset(
-                            CategoryModel.getCategoryImage(category),
-                            width: iconSize,
-                            height: iconSize,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              print('카테고리 이미지 로드 실패: $category - $error');
-                              return Container(
-                                width: iconSize,
-                                height: iconSize,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[200],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  Icons.category,
-                                  size: iconSize * 0.5,
-                                  color: Colors.grey[400],
-                                ),
-                              );
-                            },
-                          ),
-                        ),
+                      Image.asset(
+                        CategoryModel.getCategoryImage(category),
+                        width: iconSize,
+                        height: iconSize,
+                        fit: BoxFit.contain,
                       ),
                       const SizedBox(height: 6),
                       Text(
@@ -214,6 +225,7 @@ class _CategoryEditPageState extends State<CategoryEditPage> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
+                  ),
                   ),
                 ),
               ),
@@ -263,48 +275,13 @@ class _CategoryEditPageState extends State<CategoryEditPage> {
 
     try {
       final apiService = ApiService();
-      await apiService.put('/api/v1/user/categories', data: {
-        'categories': selectedCategories,
-      });
+      await apiService.updateUserCategories(selectedCategories);
 
       if (mounted) {
-        // 저장 완료 다이얼로그 표시
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: Row(
-              children: [
-                Icon(
-                  Icons.check_circle,
-                  color: Colors.green,
-                  size: 24,
-                ),
-                const SizedBox(width: 8),
-                const Text('카테고리 설정 완료'),
-              ],
-            ),
-            content: Text(
-              '관심 카테고리가 저장되었습니다.',
-              style: const TextStyle(fontSize: 16),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // 다이얼로그 닫기
-                  // 설정 화면으로 돌아가기
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (context) => const SettingScreen(),
-                    ),
-                  );
-                },
-                child: const Text('확인'),
-              ),
-            ],
+        // 설정 화면으로 바로 돌아가기
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const SettingScreen(),
           ),
         );
       }
@@ -379,21 +356,11 @@ class _CategoryEditPageState extends State<CategoryEditPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // 최소 3개 선택 안내 텍스트 + 업데이트 상태 (category_select와 동일)
+                // 카테고리 선택 상태 정보 표시
                 Center(
                   child: Column(
                     children: [
-                      Text(
-                        '최소 3개 선택',
-                        style: TextStyle(
-                          color: const Color(0xFF0565FF),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: 'Pretendard',
-                        ),
-                      ),
-                      if (isUpdating) ...[
-                        const SizedBox(height: 8),
+                      if (isLoading) ...[
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -407,32 +374,81 @@ class _CategoryEditPageState extends State<CategoryEditPage> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              '업데이트 중...',
+                              '저장된 카테고리 불러오는 중...',
                               style: TextStyle(
                                 color: const Color(0xFF0565FF),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
                                 fontFamily: 'Pretendard',
                               ),
                             ),
                           ],
                         ),
+                      ] else ...[
+                        Text(
+                          '현재 ${selected.length}개 선택됨 (최소 3개)',
+                          style: TextStyle(
+                            color: selected.length >= 3 ? const Color(0xFF0565FF) : Colors.red,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'Pretendard',
+                          ),
+                        ),
+                        if (currentCategories.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            '기존: ${currentCategories.join(', ')}',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: 'Pretendard',
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                        if (isUpdating) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0565FF)),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '업데이트 중...',
+                                style: TextStyle(
+                                  color: const Color(0xFF0565FF),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: 'Pretendard',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ],
                   ),
                 ),
                 const SizedBox(height: 8),
-                // 하단 완료 버튼 (category_select의 다음 버튼과 동일한 스타일, 텍스트만 "완료")
+                // 하단 완료 버튼 (category_select와 완전히 동일한 스타일)
                 Center(
                   child: GestureDetector(
-                    onTap: (selected.length >= 3 && hasChanges && !isUpdating)
+                    onTap: (selected.length >= 3 && hasChanges && !isUpdating && !isLoading)
                         ? _saveAndGoBack
                         : null,
                     child: Container(
                       width: 120,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: (selected.length >= 3 && hasChanges && !isUpdating)
+                        color: (selected.length >= 3 && hasChanges && !isUpdating && !isLoading)
                             ? const Color(0xFF0565FF)
                             : const Color(0xFFE0E0E0),
                         borderRadius: BorderRadius.circular(32),
@@ -445,14 +461,11 @@ class _CategoryEditPageState extends State<CategoryEditPage> {
                         ],
                       ),
                       child: const Center(
-                        child: Text(
-                          '완료',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'Pretendard',
-                          ),
+                        child: Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Colors.white,
+                          size: 32,
+                          weight: 800,
                         ),
                       ),
                     ),

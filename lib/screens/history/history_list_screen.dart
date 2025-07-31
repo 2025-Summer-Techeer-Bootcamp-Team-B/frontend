@@ -412,12 +412,6 @@ class _HistoryListScreenState extends State<HistoryListScreen> with TickerProvid
                           GestureDetector(
                             onTap: () {
                               historyProvider.removeFromHistory(article.id);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('재생 기록에서 제거되었습니다.'),
-                                  backgroundColor: Color(0xFF0565FF),
-                                ),
-                              );
                             },
                             child: Container(
                               padding: const EdgeInsets.all(8),

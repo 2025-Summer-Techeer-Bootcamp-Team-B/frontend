@@ -304,51 +304,29 @@ class _VoiceEditPageState extends State<VoiceEditPage>
             
             const SizedBox(width: 16),
             
-            // 버튼들
-            Column(
-              children: [
-                // 재생 버튼
-                GestureDetector(
-                  onTap: () => _playVoiceSample(voiceType),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: isSelected ? Colors.white : const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(8),
+            // 재생 버튼
+            GestureDetector(
+              onTap: () => _playVoiceSample(voiceType),
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.white : const Color(0xFFF5F5F5),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
                     ),
-                    child: Icon(
-                      _isPlaying && _currentlyPlaying == voiceType ? Icons.stop : Icons.play_arrow,
-                      color: isSelected ? const Color(0xFF0565FF) : Colors.grey,
-                      size: 24,
-                    ),
-                  ),
+                  ],
                 ),
-                
-                const SizedBox(height: 8),
-                
-                // 선택 버튼
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedVoiceType = voiceType;
-                    });
-                  },
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: isSelected ? Colors.white : const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.check,
-                      color: isSelected ? const Color(0xFF0565FF) : Colors.grey,
-                      size: 24,
-                    ),
-                  ),
+                child: Icon(
+                  _isPlaying && _currentlyPlaying == voiceType ? Icons.stop : Icons.play_arrow,
+                  color: isSelected ? const Color(0xFF0565FF) : Colors.grey,
+                  size: 32,
                 ),
-              ],
+              ),
             ),
           ],
         ),
@@ -357,16 +335,16 @@ class _VoiceEditPageState extends State<VoiceEditPage>
   }
 
   Widget _buildCompleteButton() {
-    bool hasChanges = selectedVoiceType != null && selectedVoiceType != currentVoiceType;
+    bool isButtonEnabled = selectedVoiceType != null;
     
     return SizedBox(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: hasChanges ? _saveVoiceType : null,
+        onPressed: isButtonEnabled ? _saveVoiceType : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: hasChanges ? const Color(0xFF0565FF) : Colors.grey[300],
-          foregroundColor: hasChanges ? Colors.white : Colors.grey[600],
+          backgroundColor: isButtonEnabled ? const Color(0xFF0565FF) : Colors.grey[300],
+          foregroundColor: isButtonEnabled ? Colors.white : Colors.grey[600],
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -403,9 +381,9 @@ class _VoiceEditPageState extends State<VoiceEditPage>
 
       String audioUrl;
       if (voiceType == 'male_voice') {
-        audioUrl = 'https://storage.googleapis.com/news_briefing_bucket/audio/2025/07/28/6bbd6ecf-62bb-4f7d-9334-f2a766c8dff2.mp3';
+        audioUrl = 'assets/a_voice/male_voice.mp3';
       } else {
-        audioUrl = 'https://storage.googleapis.com/news_briefing_bucket/audio/2025/07/28/6bbd6ecf-62bb-4f7d-9334-f2a766c8dff2.mp3';
+        audioUrl = 'assets/a_voice/female_voice.mp3';
       }
 
       setState(() {
@@ -413,7 +391,7 @@ class _VoiceEditPageState extends State<VoiceEditPage>
         _currentlyPlaying = voiceType;
       });
 
-      await _justAudioPlayer.setUrl(audioUrl);
+      await _justAudioPlayer.setAsset(audioUrl);
       await _justAudioPlayer.play();
 
       // 재생 완료 리스너
@@ -441,43 +419,10 @@ class _VoiceEditPageState extends State<VoiceEditPage>
       String voiceType = selectedVoiceType == 'male_voice' ? 'male' : 'female';
       voiceProvider.setVoiceType(voiceType);
 
-      // 저장 완료 다이얼로그 표시
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.check_circle,
-                color: Colors.green,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              const Text('음성 설정 완료'),
-            ],
-          ),
-          content: Text(
-            '${selectedVoiceType == 'male_voice' ? '남성' : '여성'} 음성으로 설정되었습니다.',
-            style: const TextStyle(fontSize: 16),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // 다이얼로그 닫기
-                // 설정 화면으로 돌아가기
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => const SettingScreen(),
-                  ),
-                );
-              },
-              child: const Text('확인'),
-            ),
-          ],
+      // 설정 화면으로 바로 돌아가기
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const SettingScreen(),
         ),
       );
     }
