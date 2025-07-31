@@ -1,43 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'screens/favorites/fav_s_t_off.dart';
-import 'screens/favorites/fav_s_t_on.dart';
-import 'screens/home/home_screen.dart';
-import 'screens/briefing/bri_playlist.dart';
-import 'screens/briefing/briefing_screen.dart';
-import 'screens/auth/interest/keyword_select.dart';
-import 'screens/auth/interest/media_select.dart';
-import 'screens/settings/contents_setting/keyword_edit.dart';
-import 'screens/settings/contents_setting/media_edit.dart';
-import 'screens/settings/setting_screen.dart';
-import 'screens/history/history_click_screen.dart';
-import 'screens/history/history_list_screen.dart';
 import 'services/api_service.dart';
 import 'providers/user_preferences_provider.dart';
-import 'providers/user_keyword_provider.dart';
 import 'providers/user_voice_type_provider.dart';
-import 'widgets/user_preferences_example.dart';
-import 'widgets/user_keyword_example.dart';
-import 'screens/auth/interest/voice_select.dart';
-import 'screens/test_api_screen.dart';
-import 'screens/auth/login_screen.dart';
+import 'providers/user_keyword_provider.dart';
 import 'providers/tts_provider.dart';
 import 'providers/favorites_provider.dart';
 import 'providers/history_provider.dart';
+import 'providers/user_info_provider.dart';
 import 'screens/auth/onboarding.dart';
-import 'screens/auth/start_screen.dart';
 // import 'screens/home/dfs.dart';
-// import 'screens/favorites/favorites_screen_toggle_off.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await ApiService().initialize();
   
-  // UserPreferencesProvider 초기화
-  final userPreferencesProvider = UserPreferencesProvider();
-  await userPreferencesProvider.loadUserPreferences();
-  
+  // 앱을 먼저 실행하고, 초기화는 백그라운드에서 진행
   runApp(const MyApp());
+  
+  // 백그라운드에서 초기화 작업 수행
+  _initializeApp();
+}
+
+Future<void> _initializeApp() async {
+  try {
+    // API 서버가 실행되지 않은 경우를 위해 try-catch로 감싸기
+    await ApiService().initialize();
+  } catch (e) {
+    print('API 서버 연결 실패 (무시됨): $e');
+  }
+  
+  try {
+    // UserPreferencesProvider 초기화
+    final userPreferencesProvider = UserPreferencesProvider();
+    await userPreferencesProvider.loadUserPreferences();
+  } catch (e) {
+    print('사용자 설정 로드 실패: $e');
+  }
 }
 
 class MyApp extends StatefulWidget {
@@ -61,10 +59,12 @@ class _MyAppState extends State<MyApp> {
     // Provider 인스턴스 가져오기
     final favoritesProvider = Provider.of<FavoritesProvider>(context, listen: false);
     final historyProvider = Provider.of<HistoryProvider>(context, listen: false);
+    final userInfoProvider = Provider.of<UserInfoProvider>(context, listen: false);
     
     // 저장된 데이터 로드
     await favoritesProvider.loadFromStorage();
     await historyProvider.loadFromStorage();
+    await userInfoProvider.loadFromStorage();
   }
 
   @override
@@ -73,9 +73,11 @@ class _MyAppState extends State<MyApp> {
       providers: [
         ChangeNotifierProvider(create: (_) => TtsProvider()),
         ChangeNotifierProvider(create: (_) => UserVoiceTypeProvider()),
+        ChangeNotifierProvider(create: (_) => UserKeywordProvider()),
         ChangeNotifierProvider(create: (_) => UserPreferencesProvider()),
         ChangeNotifierProvider(create: (_) => FavoritesProvider()),
         ChangeNotifierProvider(create: (_) => HistoryProvider()),
+        ChangeNotifierProvider(create: (_) => UserInfoProvider()),
         // 기존 Provider들...
       ],
       child: MaterialApp(
@@ -85,7 +87,7 @@ class _MyAppState extends State<MyApp> {
           primarySwatch: Colors.blue,
           fontFamily: 'Pretendard',
         ),
-        home: const StartScreen(), // 온보딩 없이 바로 시작화면으로 진입
+        home: const OnboardingScreen(), // 온보딩 화면에서 시작
       ),
     );
   }

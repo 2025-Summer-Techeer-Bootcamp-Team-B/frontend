@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'keyword_select.dart';
-import 'media_select.dart';
+import 'press_select.dart';
 import '../../../models/category_model.dart';
 import '../../../services/api_service.dart';
 

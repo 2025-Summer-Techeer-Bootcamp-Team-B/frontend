@@ -4,7 +4,7 @@ import 'package:marquee/marquee.dart';
 import '../home/home_screen.dart';
 import '../favorites/favorites_screen.dart';
 import '../history/history_list_screen.dart';
-import '../settings/setting_screen.dart';
+import '../settings/display_setting/setting_screen.dart';
 import '../../models/article_models.dart';
 import '../../services/news_service.dart';
 import '../../services/api_service.dart'; // ApiService 추가

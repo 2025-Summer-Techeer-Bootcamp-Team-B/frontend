@@ -5,7 +5,7 @@ import '../../providers/favorites_provider.dart';
 import '../briefing/briefing_screen.dart';
 import '../home/home_screen.dart';
 import '../history/history_list_screen.dart';
-import '../settings/setting_screen.dart';
+import '../settings/display_setting/setting_screen.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({Key? key}) : super(key: key);
@@ -14,7 +14,46 @@ class FavoritesScreen extends StatefulWidget {
   State<FavoritesScreen> createState() => _FavoritesScreenState();
 }
 
-class _FavoritesScreenState extends State<FavoritesScreen> {
+class _FavoritesScreenState extends State<FavoritesScreen> with TickerProviderStateMixin {
+  late AnimationController _slideController;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: Offset.zero,
+      end: const Offset(1.0, 0.0), // 오른쪽으로 슬라이드 아웃
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.ease,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _slideController.dispose();
+    super.dispose();
+  }
+
+  void _slideOutAndNavigateToHome() async {
+    await _slideController.forward(); // 슬라이드 아웃 애니메이션 실행
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => const CustomHomeScreen(),
+          transitionDuration: Duration.zero, // 즉시 전환
+          transitionsBuilder: (context, animation, secondaryAnimation, child) => child,
+        ),
+      );
+    }
+  }
+
   void _onItemTapped(int index) {
     if (index == 0) {
       Navigator.pushReplacement(
@@ -48,176 +87,179 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      body: SafeArea(
-        child: Consumer<FavoritesProvider>(
-          builder: (context, favoritesProvider, child) {
-            final favorites = favoritesProvider.favoriteArticles;
-            
-            // 카테고리별로 그룹화
-            final Map<String, List<ArticleModel>> groupedFavorites = {};
-            for (final article in favorites) {
-              final category = article.categoryName ?? '기타';
-              if (!groupedFavorites.containsKey(category)) {
-                groupedFavorites[category] = [];
+    return SlideTransition(
+      position: _slideAnimation,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F9FA),
+        body: SafeArea(
+          child: Consumer<FavoritesProvider>(
+            builder: (context, favoritesProvider, child) {
+              final favorites = favoritesProvider.favoriteArticles;
+              
+              // 카테고리별로 그룹화
+              final Map<String, List<ArticleModel>> groupedFavorites = {};
+              for (final article in favorites) {
+                final category = article.categoryName ?? '기타';
+                if (!groupedFavorites.containsKey(category)) {
+                  groupedFavorites[category] = [];
+                }
+                groupedFavorites[category]!.add(article);
               }
-              groupedFavorites[category]!.add(article);
-            }
-            
-            return Column(
-              children: [
-                // 상단 헤더
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Color(0x0A000000),
-                        blurRadius: 8,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
+              
+              return Column(
+                children: [
+                  // 상단 헤더
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0x0A000000),
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: _slideOutAndNavigateToHome,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8F9FA),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              size: 20,
+                              color: Color(0xFF0565FF),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        const Text(
+                          '즐겨찾기',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Pretendard',
+                            color: Colors.black,
+                          ),
+                        ),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () => _showSortOptions(),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8F9FA),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.sort,
+                              size: 20,
+                              color: Color(0xFF0565FF),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => Navigator.of(context).pop(),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8F9FA),
-                            borderRadius: BorderRadius.circular(12),
+                  
+                  // 즐겨찾기 목록
+                  Expanded(
+                    child: favorites.isEmpty
+                        ? const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.favorite_border,
+                                  size: 64,
+                                  color: Colors.grey,
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  '즐겨찾기한 뉴스가 없습니다',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                    fontFamily: 'Pretendard',
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  '브리핑 화면에서 하트 버튼을 눌러\n뉴스를 즐겨찾기에 추가해보세요',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                    fontFamily: 'Pretendard',
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: groupedFavorites.length,
+                            itemBuilder: (context, index) {
+                              final category = groupedFavorites.keys.elementAt(index);
+                              final articles = groupedFavorites[category]!;
+                              return _buildCategorySection(category, articles, favoritesProvider);
+                            },
                           ),
-                          child: const Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            size: 20,
-                            color: Color(0xFF0565FF),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      const Text(
-                        '즐겨찾기',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: 'Pretendard',
-                          color: Colors.black,
-                        ),
-                      ),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: () => _showSortOptions(),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8F9FA),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.sort,
-                            size: 20,
-                            color: Color(0xFF0565FF),
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
-                ),
-                
-                // 즐겨찾기 목록
-                Expanded(
-                  child: favorites.isEmpty
-                      ? const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.favorite_border,
-                                size: 64,
-                                color: Colors.grey,
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                '즐겨찾기한 뉴스가 없습니다',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey,
-                                  fontFamily: 'Pretendard',
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                '브리핑 화면에서 하트 버튼을 눌러\n뉴스를 즐겨찾기에 추가해보세요',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                  fontFamily: 'Pretendard',
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: groupedFavorites.length,
-                          itemBuilder: (context, index) {
-                            final category = groupedFavorites.keys.elementAt(index);
-                            final articles = groupedFavorites[category]!;
-                            return _buildCategorySection(category, articles, favoritesProvider);
-                          },
-                        ),
-                ),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFF0565FF),
-        unselectedItemColor: Colors.grey,
-        showSelectedLabels: true,
-        showUnselectedLabels: true,
-        currentIndex: 1, // 즐겨찾기 탭
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Padding(
-              padding: EdgeInsets.only(bottom: 8.0),
-              child: Icon(Icons.home, size: 32),
+        bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          selectedItemColor: const Color(0xFF0565FF),
+          unselectedItemColor: Colors.grey,
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          currentIndex: 1, // 즐겨찾기 탭
+          onTap: _onItemTapped,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 8.0),
+                child: Icon(Icons.home, size: 32),
+              ),
+              label: '홈',
             ),
-            label: '홈',
-          ),
-          BottomNavigationBarItem(
-            icon: Padding(
-              padding: EdgeInsets.only(bottom: 8.0),
-              child: Icon(Icons.star_border, size: 32),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 8.0),
+                child: Icon(Icons.star_border, size: 32),
+              ),
+              label: '즐겨찾기',
             ),
-            label: '즐겨찾기',
-          ),
-          BottomNavigationBarItem(
-            icon: Padding(
-              padding: EdgeInsets.only(bottom: 8.0),
-              child: Icon(Icons.history, size: 32),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 8.0),
+                child: Icon(Icons.history, size: 32),
+              ),
+              label: '재생기록',
             ),
-            label: '재생기록',
-          ),
-          BottomNavigationBarItem(
-            icon: Padding(
-              padding: EdgeInsets.only(bottom: 8.0),
-              child: Icon(Icons.settings, size: 32),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 8.0),
+                child: Icon(Icons.settings, size: 32),
+              ),
+              label: '설정',
             ),
-            label: '설정',
-          ),
-        ],
-        iconSize: 32,
-        selectedFontSize: 15,
-        unselectedFontSize: 13,
+          ],
+          iconSize: 32,
+          selectedFontSize: 15,
+          unselectedFontSize: 13,
+        ),
       ),
     );
   }
@@ -503,4 +545,4 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       ),
     );
   }
-} 
+}

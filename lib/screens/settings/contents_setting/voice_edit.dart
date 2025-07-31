@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:just_audio/just_audio.dart' as just_audio;
 import '../../../providers/user_voice_type_provider.dart';
-import '../../../screens/auth/welcome_screen.dart';
+import '../display_setting/setting_screen.dart';
 
-class VoiceSelectScreen extends StatefulWidget {
-  const VoiceSelectScreen({Key? key}) : super(key: key);
+class VoiceEditPage extends StatefulWidget {
+  const VoiceEditPage({super.key});
 
   @override
-  State<VoiceSelectScreen> createState() => _VoiceSelectScreenState();
+  State<VoiceEditPage> createState() => _VoiceEditPageState();
 }
 
-class _VoiceSelectScreenState extends State<VoiceSelectScreen>
+class _VoiceEditPageState extends State<VoiceEditPage>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late AnimationController _slideController;
@@ -22,6 +22,7 @@ class _VoiceSelectScreenState extends State<VoiceSelectScreen>
   String? _currentlyPlaying;
   bool _isPlaying = false;
   String? selectedVoiceType;
+  String? currentVoiceType;
 
   @override
   void initState() {
@@ -52,6 +53,17 @@ class _VoiceSelectScreenState extends State<VoiceSelectScreen>
       parent: _slideController,
       curve: Curves.easeOutCubic,
     ));
+
+    // 현재 음성 타입 가져오기
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final voiceProvider = Provider.of<UserVoiceTypeProvider>(context, listen: false);
+      setState(() {
+        // male -> male_voice, female -> female_voice로 변환
+        String providerVoiceType = voiceProvider.currentVoiceType ?? 'male';
+        currentVoiceType = providerVoiceType == 'male' ? 'male_voice' : 'female_voice';
+        selectedVoiceType = currentVoiceType;
+      });
+    });
 
     // 애니메이션 시작
     _fadeController.forward();
@@ -179,25 +191,25 @@ class _VoiceSelectScreenState extends State<VoiceSelectScreen>
   Widget _buildVoiceCards() {
     return Column(
       children: [
-        // 남성 음성 카드
-        _buildVoiceCard(
-          voiceType: 'male_voice',
-          title: '남성 음성',
-          subtitle: '깊고 안정적인 톤',
-          imagePath: 'assets/a_image/male_symbol.png',
-          isSelected: selectedVoiceType == 'male_voice',
-        ),
-        
-        const SizedBox(height: 16),
-        
-        // 여성 음성 카드
-        _buildVoiceCard(
-          voiceType: 'female_voice',
-          title: '여성 음성',
-          subtitle: '밝고 친근한 톤',
-          imagePath: 'assets/a_image/female_symbol.png',
-          isSelected: selectedVoiceType == 'female_voice',
-        ),
+                    // 남성 음성 카드
+            _buildVoiceCard(
+              voiceType: 'male_voice',
+              title: '남성 음성',
+              subtitle: '깊고 안정적인 톤',
+              imagePath: 'assets/a_image/male_symbol.png',
+              isSelected: selectedVoiceType == 'male_voice',
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // 여성 음성 카드
+            _buildVoiceCard(
+              voiceType: 'female_voice',
+              title: '여성 음성',
+              subtitle: '밝고 친근한 톤',
+              imagePath: 'assets/a_image/female_symbol.png',
+              isSelected: selectedVoiceType == 'female_voice',
+            ),
       ],
     );
   }
@@ -244,19 +256,19 @@ class _VoiceSelectScreenState extends State<VoiceSelectScreen>
                 color: isSelected ? Colors.white : const Color(0xFFF5F5F5),
               ),
               child: ClipOval(
-                child: Image.asset(
-                  imagePath,
-                  width: 60,
-                  height: 60,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Icon(
-                      voiceType == 'male_voice' ? Icons.man : Icons.woman,
-                      size: 30,
-                      color: isSelected ? const Color(0xFF0565FF) : Colors.grey,
-                    );
-                  },
-                ),
+                                  child: Image.asset(
+                    imagePath,
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(
+                        voiceType == 'male_voice' ? Icons.man : Icons.woman,
+                        size: 30,
+                        color: isSelected ? const Color(0xFF0565FF) : Colors.grey,
+                      );
+                    },
+                  ),
               ),
             ),
             
@@ -345,14 +357,16 @@ class _VoiceSelectScreenState extends State<VoiceSelectScreen>
   }
 
   Widget _buildCompleteButton() {
+    bool hasChanges = selectedVoiceType != null && selectedVoiceType != currentVoiceType;
+    
     return SizedBox(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: selectedVoiceType != null ? _showSelectionCompleteDialog : null,
+        onPressed: hasChanges ? _saveVoiceType : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: selectedVoiceType != null ? const Color(0xFF0565FF) : Colors.grey[300],
-          foregroundColor: selectedVoiceType != null ? Colors.white : Colors.grey[600],
+          backgroundColor: hasChanges ? const Color(0xFF0565FF) : Colors.grey[300],
+          foregroundColor: hasChanges ? Colors.white : Colors.grey[600],
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -420,65 +434,52 @@ class _VoiceSelectScreenState extends State<VoiceSelectScreen>
     }
   }
 
-  void _showSelectionCompleteDialog() {
-    if (selectedVoiceType == null) return;
+  void _saveVoiceType() {
+    if (selectedVoiceType != null) {
+      final voiceProvider = Provider.of<UserVoiceTypeProvider>(context, listen: false);
+      // male_voice -> male, female_voice -> female로 변환
+      String voiceType = selectedVoiceType == 'male_voice' ? 'male' : 'female';
+      voiceProvider.setVoiceType(voiceType);
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Row(
-          children: [
-            Icon(
-              Icons.check_circle,
-              color: Colors.green,
-              size: 24,
+      // 저장 완료 다이얼로그 표시
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.check_circle,
+                color: Colors.green,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              const Text('음성 설정 완료'),
+            ],
+          ),
+          content: Text(
+            '${selectedVoiceType == 'male_voice' ? '남성' : '여성'} 음성으로 설정되었습니다.',
+            style: const TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // 다이얼로그 닫기
+                // 설정 화면으로 돌아가기
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => const SettingScreen(),
+                  ),
+                );
+              },
+              child: const Text('확인'),
             ),
-            const SizedBox(width: 8),
-            const Text('선택 완료'),
           ],
         ),
-        content: Text(
-          '${selectedVoiceType == 'male_voice' ? '남성' : '여성'} 음성을 선택했습니다.',
-          style: const TextStyle(fontSize: 16),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // 다이얼로그 닫기
-              
-              // 호출한 화면이 설정 화면인지 확인
-              final isFromSettings = ModalRoute.of(context)?.settings.arguments as bool? ?? false;
-              
-              if (isFromSettings) {
-                // 설정에서 호출된 경우: 선택된 음성 타입을 반환하고 이전 화면으로 돌아가기
-                Navigator.of(context).pop(selectedVoiceType);
-              } else {
-                // 회원가입에서 호출된 경우: Provider에 설정하고 welcome 화면으로 이동
-                // male_voice -> male, female_voice -> female로 변환
-                String voiceType = selectedVoiceType == 'male_voice' ? 'male' : 'female';
-                context.read<UserVoiceTypeProvider>().setVoiceType(voiceType);
-                _navigateToMain();
-              }
-            },
-            child: const Text('확인'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 환영 화면으로 이동
-  void _navigateToMain() {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const WelcomeScreen(),
-      ),
-      (route) => false,
-    );
+      );
+    }
   }
 }
