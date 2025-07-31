@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'briefing_screen.dart';
 import 'package:marquee/marquee.dart';
 import '../home/home_screen.dart';
-import '../favorites/fav_s_t_off.dart';
+import '../favorites/favorites_screen.dart';
 import '../history/history_list_screen.dart';
 import '../settings/setting_screen.dart';
 import '../../models/article_models.dart';
@@ -552,7 +552,7 @@ class _BriPlaylistScreenState extends State<BriPlaylistScreen> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (_) => const FavoritesCategoryScreen(),
+                builder: (_) => const FavoritesScreen(),
                 settings: const RouteSettings(arguments: 'briefing'),
               ),
             );

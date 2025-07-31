@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 class TokenStorage {
   static const String _accessTokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
-  static const String _userEmailKey = 'user_email';
 
   // 액세스 토큰 저장
   static Future<void> saveAccessToken(String token) async {
@@ -59,31 +58,12 @@ class TokenStorage {
     await prefs.remove(_refreshTokenKey);
   }
 
-  // 사용자 이메일 저장
-  static Future<void> saveUserEmail(String email) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_userEmailKey, email);
-  }
-
-  // 사용자 이메일 불러오기
-  static Future<String?> getUserEmail() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_userEmailKey);
-  }
-
-  // 사용자 이메일 삭제
-  static Future<void> removeUserEmail() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_userEmailKey);
-  }
-
   // 모든 토큰 삭제
   static Future<void> clearTokens() async {
     final prefs = await SharedPreferences.getInstance();
     await Future.wait([
       prefs.remove(_accessTokenKey),
       prefs.remove(_refreshTokenKey),
-      prefs.remove(_userEmailKey),
     ]);
   }
 

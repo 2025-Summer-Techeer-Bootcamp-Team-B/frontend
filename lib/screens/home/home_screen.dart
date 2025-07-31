@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import '../briefing/bri_playlist.dart';
 import '../favorites/fav_s_t_off.dart';
+import '../favorites/favorites_screen.dart';
 import '../history/history_list_screen.dart';
 import '../settings/setting_screen.dart';
+import '../settings/contents_setting/keyword_edit.dart';
 import '../briefing/keyword_news.dart';
+import '../history/history_list_screen.dart';
+
 import '../briefing/briefing_screen.dart';
 import '../../services/news_service.dart';
 import '../../models/article_models.dart';
@@ -34,10 +38,12 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
   List<ArticleModel> _keywordNews = [];
   Map<String, List<ArticleModel>> _categoryArticles = {}; // 카테고리별 기사 저장
   bool _isLoading = false;
+  bool _isLoadingKeywordNews = false; // 키워드 뉴스 로딩 상태 추가
   
   // 사용자 설정 상태 추가
   List<String> _userCategories = [];
   List<String> _userPress = [];
+  List<String> _userKeywords = []; // 사용자 키워드 추가
   bool _isLoadingUserPreferences = false;
 
   @override
@@ -58,21 +64,25 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
       // 사용자 카테고리와 언론사 동시에 로드
       final categoriesFuture = _apiService.getUserCategories();
       final pressFuture = _apiService.getUserPress();
+      final keywordsFuture = _apiService.getUserKeywords(); // 키워드 로드
       
-      final results = await Future.wait([categoriesFuture, pressFuture]);
+      final results = await Future.wait([categoriesFuture, pressFuture, keywordsFuture]);
       
       final userCategories = results[0] as UserCategories;
       final userPress = results[1] as UserPress;
+      final userKeywords = results[2] as UserKeywords; // 키워드 저장
       
       setState(() {
         _userCategories = userCategories.categories ?? [];
         _userPress = userPress.press ?? [];
+        _userKeywords = userKeywords.keywords ?? []; // 키워드 저장
         _isLoadingUserPreferences = false;
       });
       
       // 디버깅용 로그
       print('로드된 사용자 카테고리: $_userCategories');
       print('로드된 사용자 언론사: $_userPress');
+      print('로드된 사용자 키워드: $_userKeywords');
       
       // 사용자 카테고리별 기사 로드
       if (_userCategories.isNotEmpty) {
@@ -148,20 +158,50 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
   Future<void> _loadRecommendedNews() async {
     try {
       setState(() {
-        _isLoading = true;
+        _isLoadingKeywordNews = true;
       });
       
-      final recommended = await _newsService.getRecommendedArticles();
-      setState(() {
-        _keywordNews = recommended;
-        _isLoading = false;
-      });
-      
-      print('키워드별 뉴스 ${recommended.length}개 로드 완료');
+      // 사용자 키워드가 있으면 키워드별 개별 추천 사용
+      if (_userKeywords.isNotEmpty) {
+        print('키워드별 개별 추천 시작: $_userKeywords');
+        List<ArticleModel> allKeywordNews = [];
+        
+        // 각 키워드별로 추천 기사 로드
+        for (final keyword in _userKeywords) {
+          try {
+            final keywordArticles = await _newsService.getRecommendedArticlesByKeyword(keyword);
+            print('키워드 "$keyword" 추천 기사: ${keywordArticles.length}개');
+            allKeywordNews.addAll(keywordArticles);
+          } catch (e) {
+            print('키워드 "$keyword" 추천 기사 로드 실패: $e');
+          }
+        }
+        
+        // 중복 제거 (같은 기사가 여러 키워드에서 나올 수 있음)
+        final uniqueNews = <String, ArticleModel>{};
+        for (final article in allKeywordNews) {
+          uniqueNews[article.id] = article;
+        }
+        
+        setState(() {
+          _keywordNews = uniqueNews.values.toList();
+          _isLoadingKeywordNews = false;
+        });
+        print('키워드별 뉴스 로드 완료: ${_keywordNews.length}개 (중복 제거 후)');
+      } else {
+        // 키워드가 없으면 기존 방식 사용
+        final recommended = await _newsService.getRecommendedArticles();
+        setState(() {
+          _keywordNews = recommended;
+          _isLoadingKeywordNews = false;
+        });
+        print('키워드별 뉴스 로드 완료: ${recommended.length}개 (기존 방식)');
+      }
     } catch (e) {
       print('추천 뉴스 데이터 로드 에러: $e');
       setState(() {
-        _isLoading = false;
+        _keywordNews = []; // 에러 시 빈 배열로 초기화
+        _isLoadingKeywordNews = false;
       });
     }
   }
@@ -204,7 +244,7 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
       case '스포츠':
         return 'assets/a_image/sport_icon.png';
       case '연예':
-        return 'assets/a_image/entertainment_icon.webp';
+        return 'assets/a_image/entertainment.webp';
       case '정치':
         return 'assets/a_image/politics_icon.webp';
       case '증권':
@@ -222,7 +262,7 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const FavoritesCategoryScreen(),
+          builder: (_) => const FavoritesScreen(),
           settings: const RouteSettings(arguments: 'home'),
         ),
       );
@@ -347,7 +387,7 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
                     const SizedBox(height: 10),
                     _isLoadingUserPreferences
                         ? const SizedBox(
-                            height: 120,
+                      height: 120,
                             child: Center(
                               child: CircularProgressIndicator(),
                             ),
@@ -375,22 +415,23 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
                                   itemBuilder: (context, index) {
                                     final category = _userCategories[index];
                                     return GestureDetector(
-                                      onTap: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
                                             builder: (context) => BriPlaylistScreen(selectedCategory: category),
-                                          ),
-                                        );
-                                      },
+                            ),
+                          );
+                        },
                                       child: _buildTodayNewsCard(
                                         category: category,
                                         iconPath: _getCategoryIconPath(category),
                                       ),
                                     );
                                   },
-                                ),
-                              ),
+                      ),
+                    ),
                     const SizedBox(height: 18),
+
                     // 키워드별 뉴스 섹션
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -398,7 +439,10 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => const KeywordNewsScreen(),
+                              builder: (context) => KeywordNewsScreen(
+                                articles: _keywordNews,
+                                title: '키워드별 뉴스',
+                              ),
                             ),
                           );
                         },
@@ -420,7 +464,7 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
                     ),
                     const SizedBox(height: 10),
                     // 키워드별 뉴스 섹션에서 _keywordNews 사용
-                    _isLoading
+                    _isLoadingKeywordNews
                         ? const SizedBox(
                             height: 240,
                             child: Center(
@@ -432,7 +476,7 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
                                 height: 240,
                                 child: Center(
                                   child: Text(
-                                    '키워드별 뉴스가 없습니다.',
+                                    '키워드별 뉴스를 불러오는 중...',
                                     style: TextStyle(
                                       fontSize: 16,
                                       color: Colors.grey,
@@ -459,12 +503,13 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
                                           );
                                         }
                                       },
-                                      child: _buildKeywordNewsCard(article), // article을 파라미터로 전달
+                                      child: _buildKeywordNewsCard(article),
                                     );
                                   },
                                 ),
                               ),
                     const SizedBox(height: 18),
+
                   ],
                 ),
               ),
@@ -670,6 +715,8 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
     );
   }
 
+
+
   Widget _buildKeywordNewsCard(ArticleModel? article) {
     return Container(
       width: 200,
@@ -773,8 +820,7 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
                   }
                 },
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFF0565FF),
                     borderRadius: BorderRadius.circular(19),
@@ -836,29 +882,29 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
     return Consumer<TtsProvider>(
       builder: (context, tts, child) {
         final article = tts.currentArticle;
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF0565FF).withOpacity(0.13),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0565FF).withOpacity(0.13),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(8),
-                ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(8),
+            ),
                 child: article != null && article.thumbnailImageUrl != null && article.thumbnailImageUrl!.isNotEmpty
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
@@ -866,9 +912,9 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
                           article.thumbnailImageUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) => const Center(
-                            child: Text(
-                              '뉴스\n사진',
-                              textAlign: TextAlign.center,
+              child: Text(
+                '뉴스\n사진',
+                textAlign: TextAlign.center,
                               style: TextStyle(fontSize: 10, color: Colors.black54, fontFamily: 'Pretendard'),
                             ),
                           ),
@@ -879,28 +925,28 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
                           '뉴스\n사진',
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 10, color: Colors.black54, fontFamily: 'Pretendard'),
-                        ),
-                      ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
                   (!tts.hasPlayedOnce) ? '재생 중이 아님' : (article?.title ?? '기사 제목'),
-                  style: const TextStyle(
-                    fontFamily: 'Pretendard',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              style: const TextStyle(
+                fontFamily: 'Pretendard',
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
               ),
-              IconButton(
-                icon: Icon(
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            icon: Icon(
                   tts.isPlaying ? Icons.pause : Icons.play_arrow,
                   size: tts.isPlaying ? 28 : 32,
-                  color: Colors.black,
-                ),
+              color: Colors.black,
+            ),
                 onPressed: () async {
                   try {
                     if (tts.isPlaying) {
@@ -926,10 +972,10 @@ class _CustomHomeScreenState extends State<CustomHomeScreen> {
                       );
                     }
                   }
-                },
-              ),
-            ],
+            },
           ),
+        ],
+      ),
         );
       },
     );

@@ -228,4 +228,18 @@ class NewsService {
       rethrow;
     }
   }
+
+  /// 특정 키워드별 추천 뉴스 조회
+  Future<List<ArticleModel>> getRecommendedArticlesByKeyword(String keyword) async {
+    try {
+      final response = await _apiService.get('/api/v1/articles/recommend-by-keyword', 
+        queryParameters: {'keyword': keyword});
+      return (response.data as List?)
+              ?.map((article) => ArticleModel.fromJson(article))
+              .toList() ??
+          [];
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

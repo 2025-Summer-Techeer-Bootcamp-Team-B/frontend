@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'contents_setting/keyword_edit.dart';
 import 'contents_setting/media_edit.dart';
+import 'contents_setting/category_edit.dart';
 import 'display_setting/font_size.dart';
 import '../home/home_screen.dart';
-import '../favorites/fav_s_t_off.dart';
 import '../history/history_list_screen.dart';
 import '../briefing/bri_playlist.dart';
+
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -183,7 +185,9 @@ class _SettingScreenState extends State<SettingScreen> {
                         _buildSettingCategory(
                           icon: 'assets/a_image/Notification_setting_icon.png',
                           title: '알림 설정',
-                          subItems: [],
+                          subItems: [
+                            // 즐겨찾기 기능 제거됨
+                          ],
                         ),
                         _buildDivider(),
 
@@ -196,6 +200,13 @@ class _SettingScreenState extends State<SettingScreen> {
                             '글자 크기 조정',
                             '테마 색깔 변경',
                           ],
+                          hasToggle: true,
+                          toggleValue: isDarkMode,
+                          onToggleChanged: (value) {
+                            setState(() {
+                              isDarkMode = value;
+                            });
+                          },
                         ),
                         _buildDivider(),
 
@@ -239,6 +250,9 @@ class _SettingScreenState extends State<SettingScreen> {
     required String icon,
     required String title,
     required List<String> subItems,
+    bool hasToggle = false,
+    bool toggleValue = false,
+    ValueChanged<bool>? onToggleChanged,
   }) {
     bool isExpanded = expandedStates[title] ?? false;
 
@@ -294,8 +308,13 @@ class _SettingScreenState extends State<SettingScreen> {
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             child: Column(
-              children:
-                  subItems.map((subItem) => _buildSubItem(subItem)).toList(),
+              children: subItems.map((subItem) {
+                if (hasToggle && subItem == '다크모드') {
+                  return _buildToggleItem(subItem, toggleValue, onToggleChanged);
+                } else {
+                  return _buildSubItem(subItem);
+                }
+              }).toList(),
             ),
           ),
       ],
@@ -303,37 +322,15 @@ class _SettingScreenState extends State<SettingScreen> {
   }
 
   Widget _buildSubItem(String title) {
-    // 토글이 필요한 항목들 처리
-    if (title == '목소리 설정') {
-      return _buildToggleItem(
-        title: '목소리 설정',
-        subtitle: isMaleVoice ? '남성' : '여성',
-        value: isMaleVoice,
-        onChanged: (value) {
-          setState(() {
-            isMaleVoice = value;
-          });
-        },
-      );
-    } else if (title == '다크모드') {
-      return _buildToggleItem(
-        title: '다크모드',
-        subtitle: isDarkMode ? '켜짐' : '꺼짐',
-        value: isDarkMode,
-        onChanged: (value) {
-          setState(() {
-            isDarkMode = value;
-          });
-        },
-      );
-    }
-
-    // 일반 항목들
     return GestureDetector(
       onTap: () {
         // 하위 아이템 클릭 시 처리
         if (title == '관심 카테고리 수정') {
-          // 연동 비워둠
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const CategoryEditPage(),
+            ),
+          );
         } else if (title == '관심 키워드 수정') {
           Navigator.of(context).push(
             MaterialPageRoute(
@@ -357,17 +354,17 @@ class _SettingScreenState extends State<SettingScreen> {
         }
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 46),
+        padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 12),
         child: Row(
           children: [
             Expanded(
               child: Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.w300,
                   fontFamily: 'Pretendard',
-                  color: Color(0xFF666666),
+                  color: Colors.black,
                 ),
               ),
             ),
@@ -382,40 +379,20 @@ class _SettingScreenState extends State<SettingScreen> {
     );
   }
 
-  Widget _buildToggleItem({
-    required String title,
-    required String subtitle,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
+  Widget _buildToggleItem(String title, bool value, ValueChanged<bool>? onChanged) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 46),
+      padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 12),
       child: Row(
         children: [
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w300,
-                    fontFamily: 'Pretendard',
-                    color: Color(0xFF666666),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w300,
-                    fontFamily: 'Pretendard',
-                    color: Color(0xFF999999),
-                  ),
-                ),
-              ],
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w300,
+                fontFamily: 'Pretendard',
+                color: Colors.black,
+              ),
             ),
           ),
           Switch(
@@ -423,24 +400,8 @@ class _SettingScreenState extends State<SettingScreen> {
             onChanged: onChanged,
             activeColor: const Color(0xFF0565FF),
             activeTrackColor: const Color(0xFF0565FF).withOpacity(0.3),
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: const Color(0xFFE0E0E0),
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            thumbColor: WidgetStateProperty.resolveWith<Color>(
-                (Set<WidgetState> states) {
-              if (states.contains(WidgetState.selected)) {
-                return const Color(0xFF0565FF);
-              }
-              return Colors.white;
-            }),
-            trackColor: WidgetStateProperty.resolveWith<Color>(
-                (Set<WidgetState> states) {
-              if (states.contains(WidgetState.selected)) {
-                return const Color(0xFF0565FF).withOpacity(0.3);
-              }
-              return const Color(0xFFE0E0E0);
-            }),
-            trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+            inactiveThumbColor: Colors.grey,
+            inactiveTrackColor: Colors.grey.withOpacity(0.3),
           ),
         ],
       ),

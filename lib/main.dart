@@ -22,6 +22,8 @@ import 'screens/auth/interest/voice_select.dart';
 import 'screens/test_api_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'providers/tts_provider.dart';
+import 'providers/favorites_provider.dart';
+import 'providers/history_provider.dart';
 import 'screens/auth/onboarding.dart';
 import 'screens/auth/start_screen.dart';
 // import 'screens/home/dfs.dart';
@@ -38,8 +40,32 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // 앱 시작 시 데이터 로드는 MaterialApp이 빌드된 후에 수행
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadStoredData();
+    });
+  }
+
+  Future<void> _loadStoredData() async {
+    // Provider 인스턴스 가져오기
+    final favoritesProvider = Provider.of<FavoritesProvider>(context, listen: false);
+    final historyProvider = Provider.of<HistoryProvider>(context, listen: false);
+    
+    // 저장된 데이터 로드
+    await favoritesProvider.loadFromStorage();
+    await historyProvider.loadFromStorage();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +74,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TtsProvider()),
         ChangeNotifierProvider(create: (_) => UserVoiceTypeProvider()),
         ChangeNotifierProvider(create: (_) => UserPreferencesProvider()),
+        ChangeNotifierProvider(create: (_) => FavoritesProvider()),
+        ChangeNotifierProvider(create: (_) => HistoryProvider()),
         // 기존 Provider들...
       ],
       child: MaterialApp(
