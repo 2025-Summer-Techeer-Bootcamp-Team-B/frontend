@@ -12,8 +12,9 @@ class ApiService {
   late Dio _dio;
   String? _accessToken;
   String? _refreshToken; // 리프레시 토큰 추가
+  bool _isRefreshing = false; // 토큰 갱신 중인지 확인하는 플래그
 
-  // TODO: 백엔드 배포 후 실제 URL로 변경
+  //static const String baseUrl = 'http://yosm-n.kro.kr:8000'; // 실제 백엔드 서버
   static const String baseUrl = 'http://yosm-n.kro.kr:8000'; // 실제 백엔드 서버
 
   Future<void> initialize() async {
@@ -53,9 +54,12 @@ class ApiService {
       onError: (error, handler) async {
         print('ERROR[${error.response?.statusCode}] => ${error.message}');
 
-        // 401 에러 시 토큰 갱신 시도
-        if (error.response?.statusCode == 401 && _refreshToken != null) {
+        // 401 에러 시 토큰 갱신 시도 (이미 갱신 중이면 무시)
+        if (error.response?.statusCode == 401 && _refreshToken != null && !_isRefreshing) {
+          _isRefreshing = true; // 갱신 시작
+          
           try {
+            print('토큰 갱신 시도 중...');
             // 토큰 갱신 요청
             final refreshRequest =
                 RefreshTokenRequest(refreshToken: _refreshToken!);
@@ -70,6 +74,9 @@ class ApiService {
             await setTokens(authResponse.accessToken ?? '',
                 authResponse.refreshToken ?? '');
 
+            print('토큰 갱신 성공!');
+            _isRefreshing = false; // 갱신 완료
+
             // 새 토큰으로 원래 요청 재시도
             final originalRequest = error.requestOptions;
             originalRequest.headers['Authorization'] =
@@ -81,9 +88,14 @@ class ApiService {
           } catch (refreshError) {
             // 토큰 갱신 실패 시 로그아웃 처리
             print('Token refresh failed: $refreshError');
+            _isRefreshing = false; // 갱신 실패
             await clearTokens();
-            // TODO: 로그인 화면으로 리다이렉트
+            // 로그인 화면으로 리다이렉트
+            _redirectToLogin();
           }
+        } else if (error.response?.statusCode == 401 && _isRefreshing) {
+          // 이미 토큰 갱신 중이면 에러 그대로 전달
+          print('토큰 갱신 중이므로 에러 그대로 전달');
         }
 
         handler.next(error);
@@ -136,6 +148,12 @@ class ApiService {
 
   // 토큰 값 확인 (디버깅용)
   String? get accessTokenValue => _accessToken;
+
+  // 로그인 화면으로 리다이렉트
+  void _redirectToLogin() {
+    // TODO: 전역 네비게이션을 통해 로그인 화면으로 이동
+    print('토큰이 만료되어 로그인 화면으로 이동해야 합니다.');
+  }
 
   // GET 요청
   Future<Response> get(String path,

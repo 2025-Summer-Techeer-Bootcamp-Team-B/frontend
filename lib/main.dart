@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'screens/favorites/fav_s_t_off.dart';
-import 'screens/favorites/favorites_screen_toggle_on.dart';
+import 'screens/favorites/fav_s_t_on.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/briefing/bri_playlist.dart';
 import 'screens/briefing/briefing_screen.dart';
@@ -22,6 +22,8 @@ import 'screens/auth/interest/voice_select.dart';
 import 'screens/test_api_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'providers/tts_provider.dart';
+import 'providers/favorites_provider.dart';
+import 'providers/history_provider.dart';
 import 'screens/auth/onboarding.dart';
 import 'screens/auth/start_screen.dart';
 // import 'screens/home/dfs.dart';
@@ -30,11 +32,40 @@ import 'screens/auth/start_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ApiService().initialize();
+  
+  // UserPreferencesProvider 초기화
+  final userPreferencesProvider = UserPreferencesProvider();
+  await userPreferencesProvider.loadUserPreferences();
+  
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // 앱 시작 시 데이터 로드는 MaterialApp이 빌드된 후에 수행
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadStoredData();
+    });
+  }
+
+  Future<void> _loadStoredData() async {
+    // Provider 인스턴스 가져오기
+    final favoritesProvider = Provider.of<FavoritesProvider>(context, listen: false);
+    final historyProvider = Provider.of<HistoryProvider>(context, listen: false);
+    
+    // 저장된 데이터 로드
+    await favoritesProvider.loadFromStorage();
+    await historyProvider.loadFromStorage();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,8 +73,9 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => TtsProvider()),
         ChangeNotifierProvider(create: (_) => UserVoiceTypeProvider()),
-        ChangeNotifierProvider(create: (_) => UserKeywordProvider()),
         ChangeNotifierProvider(create: (_) => UserPreferencesProvider()),
+        ChangeNotifierProvider(create: (_) => FavoritesProvider()),
+        ChangeNotifierProvider(create: (_) => HistoryProvider()),
         // 기존 Provider들...
       ],
       child: MaterialApp(

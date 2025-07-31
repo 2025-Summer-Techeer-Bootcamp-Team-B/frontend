@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'briefing_screen.dart';
 import 'package:marquee/marquee.dart';
 import '../home/home_screen.dart';
-import '../favorites/fav_s_t_off.dart';
+import '../favorites/favorites_screen.dart';
 import '../history/history_list_screen.dart';
 import '../settings/setting_screen.dart';
 import '../../models/article_models.dart';
 import '../../services/news_service.dart';
+import '../../services/api_service.dart'; // ApiService 추가
+import '../../models/common_models.dart'; // UserCategories 추가
 import 'package:provider/provider.dart';
 import '../../providers/tts_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -28,10 +30,13 @@ class _BriPlaylistScreenState extends State<BriPlaylistScreen> {
   bool isPlaying = true;
   final int _selectedIndex = 0; // 하단 네비게이션 상태
   final NewsService _newsService = NewsService();
+  final ApiService _apiService = ApiService(); // ApiService 추가
 
-  final List<String> categories = ['경제', '정치', '사회', 'IT', '스포츠', '문화', '국제', '연예', '증권', '부동산'];
+  // 하드코딩된 categories 제거하고 동적으로 로드
+  List<String> categories = [];
   List<ArticleModel> _currentArticles = [];
   bool _isLoading = false;
+  bool _isLoadingCategories = false; // 카테고리 로딩 상태 추가
 
   // 삭제한 기사 ID 저장용
   Set<String> _deletedArticleIds = {};
@@ -45,14 +50,8 @@ class _BriPlaylistScreenState extends State<BriPlaylistScreen> {
     super.initState();
     // 삭제한 기사 불러오기
     _loadDeletedArticles();
-    // 카테고리 세팅
-    if (widget.selectedCategory != null) {
-      final categoryIndex = categories.indexOf(widget.selectedCategory!);
-      if (categoryIndex != -1) {
-        selectedCategory = categoryIndex;
-      }
-    }
-    _loadCategoryArticles(categories[selectedCategory]);
+    // 사용자 카테고리 로드
+    _loadUserCategories();
     // 기존 재생 상태 유지 (음성 멈춤 방지)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final ttsProvider = Provider.of<TtsProvider>(context, listen: false);
@@ -60,6 +59,40 @@ class _BriPlaylistScreenState extends State<BriPlaylistScreen> {
         print('기존 재생 상태 유지: ${ttsProvider.currentArticle!.title}');
       }
     });
+  }
+
+  // 사용자 카테고리 로드
+  Future<void> _loadUserCategories() async {
+    try {
+      setState(() {
+        _isLoadingCategories = true;
+      });
+      
+      final userCategories = await _apiService.getUserCategories();
+      setState(() {
+        categories = userCategories.categories ?? [];
+        _isLoadingCategories = false;
+      });
+      
+      print('로드된 사용자 카테고리: $categories');
+      
+      // 카테고리가 로드된 후 선택된 카테고리 설정 및 기사 로드
+      if (categories.isNotEmpty) {
+        if (widget.selectedCategory != null) {
+          final categoryIndex = categories.indexOf(widget.selectedCategory!);
+          if (categoryIndex != -1) {
+            selectedCategory = categoryIndex;
+          }
+        }
+        _loadCategoryArticles(categories[selectedCategory]);
+      }
+      
+    } catch (e) {
+      print('사용자 카테고리 로드 에러: $e');
+      setState(() {
+        _isLoadingCategories = false;
+      });
+    }
   }
 
   Future<void> _loadDeletedArticles() async {
@@ -102,8 +135,6 @@ class _BriPlaylistScreenState extends State<BriPlaylistScreen> {
       });
     }
   }
-
-
 
   void _onCategoryChanged(int index) {
     setState(() {
@@ -180,50 +211,70 @@ class _BriPlaylistScreenState extends State<BriPlaylistScreen> {
 
               const SizedBox(height: 14), // 카테고리 버튼 위 간격
               // 카테고리 탭
-              SizedBox(
-                height: 32,
-                child: ListView.separated(
-                  clipBehavior: Clip.none, // 스크롤할 때 그림자가 잘리지 않게
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  itemCount: categories.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 14),
-                  itemBuilder: (context, idx) {
-                    final selected = selectedCategory == idx;
-                    return GestureDetector(
-                      onTap: () => _onCategoryChanged(idx),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 120),
-                        curve: Curves.easeOut,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: selected ? kBlue : Colors.white,
-                          borderRadius: BorderRadius.circular(28),
-                          boxShadow: [
-                            BoxShadow(
-                              color: selected
-                                  ? kBlue.withOpacity(0.18)
-                                  : Colors.black12,
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
+              _isLoadingCategories
+                  ? const SizedBox(
+                      height: 32,
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  : categories.isEmpty
+                      ? const SizedBox(
+                          height: 32,
+                          child: Center(
+                            child: Text(
+                              '선택된 카테고리가 없습니다.',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
                             ),
-                          ],
-                        ),
-                        child: Text(
-                          categories[idx],
-                          style: TextStyle(
-                            fontFamily: kPretendard,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                            color: selected ? Colors.white : Colors.black54,
+                          ),
+                        )
+                      : SizedBox(
+                          height: 32,
+                          child: ListView.separated(
+                            clipBehavior: Clip.none, // 스크롤할 때 그림자가 잘리지 않게
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            itemCount: categories.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 14),
+                            itemBuilder: (context, idx) {
+                              final selected = selectedCategory == idx;
+                              return GestureDetector(
+                                onTap: () => _onCategoryChanged(idx),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 120),
+                                  curve: Curves.easeOut,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: selected ? kBlue : Colors.white,
+                                    borderRadius: BorderRadius.circular(28),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: selected
+                                            ? kBlue.withOpacity(0.18)
+                                            : Colors.black12,
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Text(
+                                    categories[idx],
+                                    style: TextStyle(
+                                      fontFamily: kPretendard,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                      color: selected ? Colors.white : Colors.black54,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ),
               const SizedBox(height: 20), // 카테고리 버튼 아래 간격을 늘려서 그림자가 보이게
               // 구분선
               Divider(
@@ -233,119 +284,133 @@ class _BriPlaylistScreenState extends State<BriPlaylistScreen> {
               ),
               // 기사 리스트
               Expanded(
-                child: ReorderableListView.builder(
-                  key: ValueKey(selectedCategory),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  itemCount: visibleArticles.length,
-                  buildDefaultDragHandles: false,
-                  onReorder: (oldIndex, newIndex) {
-                    setState(() {
-                      if (newIndex > oldIndex) newIndex--;
-                      final item = visibleArticles.removeAt(oldIndex);
-                      visibleArticles.insert(newIndex, item);
-                      // _currentArticles도 동기화
-                      _currentArticles = visibleArticles;
-                    });
-                  },
-                  itemBuilder: (context, idx) {
-                    final article = visibleArticles[idx];
-                    return Column(
-                      key: ValueKey('tile_${article.title}_${article.author}_$idx'),
-                      children: [
-                        Dismissible(
-                          key: ValueKey('dismiss_${article.title}_${article.author}_$idx'),
-                          direction: DismissDirection.endToStart,
-                          background: Container(
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            color: Colors.redAccent,
-                            child: const Icon(Icons.delete, color: Colors.white, size: 28),
-                          ),
-                          onDismissed: (direction) {
-                            _deleteArticle(article.id);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('삭제됨')),
-                            );
-                          },
-                          child: ListTile(
-                            leading: Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                borderRadius: BorderRadius.circular(8),
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(),
+                      )
+                    : visibleArticles.isEmpty
+                        ? const Center(
+                            child: Text(
+                              '해당 카테고리의 기사가 없습니다.',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
                               ),
-                              child: article.thumbnailImageUrl != null && article.thumbnailImageUrl!.isNotEmpty
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.network(
-                                        article.thumbnailImageUrl!,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) => const Center(
-                                          child: Text(
-                                            '뉴스\n사진',
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.black54,
-                                                fontFamily: kPretendard),
-                                          ),
+                            ),
+                          )
+                        : ReorderableListView.builder(
+                            key: ValueKey(selectedCategory),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            itemCount: visibleArticles.length,
+                            buildDefaultDragHandles: false,
+                            onReorder: (oldIndex, newIndex) {
+                              setState(() {
+                                if (newIndex > oldIndex) newIndex--;
+                                final item = visibleArticles.removeAt(oldIndex);
+                                visibleArticles.insert(newIndex, item);
+                                // _currentArticles도 동기화
+                                _currentArticles = visibleArticles;
+                              });
+                            },
+                            itemBuilder: (context, idx) {
+                              final article = visibleArticles[idx];
+                              return Column(
+                                key: ValueKey('tile_${article.title}_${article.author}_$idx'),
+                                children: [
+                                  Dismissible(
+                                    key: ValueKey('dismiss_${article.title}_${article.author}_$idx'),
+                                    direction: DismissDirection.endToStart,
+                                    background: Container(
+                                      alignment: Alignment.centerRight,
+                                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                                      color: Colors.redAccent,
+                                      child: const Icon(Icons.delete, color: Colors.white, size: 28),
+                                    ),
+                                    onDismissed: (direction) {
+                                      _deleteArticle(article.id);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('삭제됨')),
+                                      );
+                                    },
+                                    child: ListTile(
+                                      leading: Container(
+                                        width: 44,
+                                        height: 44,
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[300],
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: article.thumbnailImageUrl != null && article.thumbnailImageUrl!.isNotEmpty
+                                            ? ClipRRect(
+                                                borderRadius: BorderRadius.circular(8),
+                                                child: Image.network(
+                                                  article.thumbnailImageUrl!,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (context, error, stackTrace) => const Center(
+                                                    child: Text(
+                                                      '뉴스\n사진',
+                                                      textAlign: TextAlign.center,
+                                                      style: TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.black54,
+                                                          fontFamily: kPretendard),
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                            : const Center(
+                                                child: Text(
+                                                  '뉴스\n사진',
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.black54,
+                                                      fontFamily: kPretendard),
+                                                ),
+                                              ),
+                                      ),
+                                      title: Text(
+                                        article.title,
+                                        style: const TextStyle(
+                                          fontFamily: kPretendard,
+                                          fontWeight: FontWeight.w400,
+                                          fontSize: 15,
                                         ),
                                       ),
-                                    )
-                                  : const Center(
-                                      child: Text(
-                                        '뉴스\n사진',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
+                                      subtitle: Text(
+                                        article.author ?? '',
+                                        style: const TextStyle(
                                             fontSize: 12,
-                                            color: Colors.black54,
+                                            color: kBlue,
                                             fontFamily: kPretendard),
                                       ),
+                                      trailing: ReorderableDragStartListener(
+                                        index: idx,
+                                        child: _buildDragHandle(),
+                                      ),
+                                      onTap: () {
+                                        // 기사 클릭 시 자동 재생하지 않고 화면만 이동
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => BriefingScreen(article: article),
+                                          ),
+                                        );
+                                      },
                                     ),
-                            ),
-                            title: Text(
-                              article.title,
-                              style: const TextStyle(
-                                fontFamily: kPretendard,
-                                fontWeight: FontWeight.w400,
-                                fontSize: 15,
-                              ),
-                            ),
-                            subtitle: Text(
-                              article.author ?? '',
-                              style: const TextStyle(
-                                  fontSize: 12,
-                                  color: kBlue,
-                                  fontFamily: kPretendard),
-                            ),
-                            trailing: ReorderableDragStartListener(
-                              index: idx,
-                              child: _buildDragHandle(),
-                            ),
-                            onTap: () {
-                              // 기사 클릭 시 자동 재생하지 않고 화면만 이동
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => BriefingScreen(article: article),
-                                ),
+                                  ),
+                                  if (idx < visibleArticles.length - 1)
+                                    Divider(
+                                      height: 1,
+                                      thickness: 0.5,
+                                      color: Colors.grey[300],
+                                      indent: 16,
+                                      endIndent: 16,
+                                    ),
+                                ],
                               );
                             },
                           ),
-                        ),
-                        if (idx < visibleArticles.length - 1)
-                          Divider(
-                            height: 1,
-                            thickness: 0.5,
-                            color: Colors.grey[300],
-                            indent: 16,
-                            endIndent: 16,
-                          ),
-                      ],
-                    );
-                  },
-                ),
               ),
               // 하단 플레이어
               Consumer<TtsProvider>(
@@ -487,7 +552,7 @@ class _BriPlaylistScreenState extends State<BriPlaylistScreen> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (_) => const FavoritesCategoryScreen(),
+                builder: (_) => const FavoritesScreen(),
                 settings: const RouteSettings(arguments: 'briefing'),
               ),
             );
